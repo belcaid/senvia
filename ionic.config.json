@@ -1,0 +1,7 @@
+{
+  "name": "Senvia",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
