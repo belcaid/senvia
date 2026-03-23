@@ -62,17 +62,19 @@ import { formatDateTime } from '@/utils/date.util'
 import { getCategoryLabel, getPlantIcon } from '@/utils/plant-options.util'
 import { getPlantStatusColor, getPlantStatusLabel } from '@/utils/plant-status.util'
 import type { Measurement } from '@/types/measurement.types'
-import type { Plant } from '@/types/plant.types'
+import type { Plant, PlantStatus } from '@/types/plant.types'
 
 const props = withDefaults(
   defineProps<{
     plant: Plant
     measurement?: Measurement | null
     showFavoriteAction?: boolean
+    statusOverride?: PlantStatus | null
   }>(),
   {
     measurement: null,
     showFavoriteAction: true,
+    statusOverride: null,
   },
 )
 
@@ -83,8 +85,9 @@ const emit = defineEmits<{
 
 const plantIcon = computed(() => getPlantIcon(props.plant.icon))
 const categoryLabel = computed(() => getCategoryLabel(props.plant.category))
-const statusLabel = computed(() => getPlantStatusLabel(props.plant.status))
-const statusColor = computed(() => getPlantStatusColor(props.plant.status))
+const effectiveStatus = computed(() => props.statusOverride ?? props.plant.status)
+const statusLabel = computed(() => getPlantStatusLabel(effectiveStatus.value))
+const statusColor = computed(() => getPlantStatusColor(effectiveStatus.value))
 
 const temperatureLabel = computed(() => (props.measurement ? `${props.measurement.temperature.toFixed(1)} °C` : '-'))
 const moistureLabel = computed(() => (props.measurement ? `${Math.round(props.measurement.moisture)} %` : '-'))

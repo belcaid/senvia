@@ -177,6 +177,11 @@ export class PlantRepository {
     return rows.map(mapPlantRow)
   }
 
+  async updateStatus(id: string, status: PlantStatus): Promise<Plant | null> {
+    await runStatement('UPDATE plants SET status = ? WHERE id = ?;', [status, id])
+    return this.findById(id)
+  }
+
   async findFavorites(): Promise<Plant[]> {
     const rows = await queryRows<PlantRow>(
       'SELECT * FROM plants WHERE is_favorite = 1 ORDER BY updated_at DESC;',

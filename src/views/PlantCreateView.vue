@@ -51,13 +51,16 @@ const creerPlante = async (values: PlantFormValues): Promise<void> => {
   isSubmitting.value = true
 
   try {
+    const fallbackProfileId = thresholdProfilesStore.profils[0]?.id ?? null
+    const thresholdProfileId = values.thresholdProfileId ?? fallbackProfileId
+
     const plante = await plantsStore.ajouterPlante({
       name: values.nom,
       category: values.categorie,
       location: values.emplacement,
       icon: values.icone,
       isFavorite: values.estFavori,
-      thresholdProfileId: values.thresholdProfileId,
+      thresholdProfileId,
       status: 'unknown',
       sensorId: null,
     })

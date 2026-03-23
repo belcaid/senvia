@@ -3,9 +3,9 @@ import type { PlantStatus } from '@/types/plant.types'
 export const getPlantStatusLabel = (status: PlantStatus): string => {
   switch (status) {
     case 'healthy':
-      return 'Saine'
+      return 'En sante'
     case 'warning':
-      return 'Surveillance'
+      return 'A surveiller'
     case 'critical':
       return 'Critique'
     case 'stale_data':

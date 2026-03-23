@@ -11,6 +11,10 @@
       <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
         {{ measurementsStore.erreur }}
       </ion-note>
+      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">{{ settingsStore.erreur }}</ion-note>
+      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+        {{ thresholdProfilesStore.erreur }}
+      </ion-note>
 
       <ion-note class="results-count" color="medium">
         {{ favoris.length }} favori{{ favoris.length > 1 ? 's' : '' }}
@@ -26,6 +30,7 @@
           :key="plante.id"
           :plant="plante"
           :measurement="measurementsStore.derniereMesureParPlante[plante.id] ?? null"
+          :status-override="statusByPlantId[plante.id] ?? null"
           @open="ouvrirPlante"
           @toggle-favorite="retirerFavori"
         />
@@ -63,18 +68,47 @@ import PlantCard from '@/components/PlantCard.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
+import { useSettingsStore } from '@/stores/settings.store'
+import { useThresholdProfilesStore } from '@/stores/threshold-profiles.store'
+import { isMeasurementStale } from '@/utils/measurement-freshness.util'
+import { evaluatePlantHealth } from '@/utils/plant-health.util'
+import type { PlantStatus } from '@/types/plant.types'
 
 const router = useRouter()
 const plantsStore = usePlantsStore()
 const measurementsStore = useMeasurementsStore()
+const settingsStore = useSettingsStore()
+const thresholdProfilesStore = useThresholdProfilesStore()
 
 const favoris = computed(() => plantsStore.favoris)
+const statusByPlantId = computed<Record<string, PlantStatus>>(() => {
+  const staleThreshold = settingsStore.parametres.staleDataThresholdMinutes
+
+  return favoris.value.reduce<Record<string, PlantStatus>>((acc, plante) => {
+    const mesure = measurementsStore.derniereMesureParPlante[plante.id] ?? null
+    const profil = thresholdProfilesStore.getProfilParId(plante.thresholdProfileId)
+    const assessment = evaluatePlantHealth({
+      measurement: mesure,
+      thresholdProfile: profil,
+      isStale: isMeasurementStale(mesure?.measuredAt, staleThreshold),
+      staleThresholdMinutes: staleThreshold,
+    })
+
+    acc[plante.id] = assessment.status
+    return acc
+  }, {})
+})
 
 const chargerFavoris = async (): Promise<void> => {
-  await plantsStore.chargerPlantes()
+  await Promise.all([
+    plantsStore.chargerPlantes(),
+    settingsStore.chargerParametres(),
+    thresholdProfilesStore.chargerProfils({ ensureDefaults: true }),
+  ])
 
   const plantIds = plantsStore.favoris.map((plante) => plante.id)
   await measurementsStore.chargerDernieresMesures(plantIds)
+  await plantsStore.synchroniserStatutsRecalcules(statusByPlantId.value)
 }
 
 const retirerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Promise<void> => {

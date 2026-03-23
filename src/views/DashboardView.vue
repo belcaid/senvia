@@ -46,8 +46,8 @@
             label-placement="stacked"
           >
             <ion-select-option value="all">Tous</ion-select-option>
-            <ion-select-option value="healthy">Saine</ion-select-option>
-            <ion-select-option value="warning">Surveillance</ion-select-option>
+            <ion-select-option value="healthy">En sante</ion-select-option>
+            <ion-select-option value="warning">A surveiller</ion-select-option>
             <ion-select-option value="critical">Critique</ion-select-option>
             <ion-select-option value="stale_data">Donnees anciennes</ion-select-option>
             <ion-select-option value="unknown">Inconnu</ion-select-option>
@@ -63,6 +63,10 @@
       <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
         {{ measurementsStore.erreur }}
       </ion-note>
+      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">{{ settingsStore.erreur }}</ion-note>
+      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+        {{ thresholdProfilesStore.erreur }}
+      </ion-note>
 
       <div v-if="plantsStore.estChargement" class="loading-container">
         <ion-spinner name="crescent" />
@@ -74,6 +78,7 @@
           :key="plante.id"
           :plant="plante"
           :measurement="measurementsStore.derniereMesureParPlante[plante.id] ?? null"
+          :status-override="statusByPlantId[plante.id] ?? null"
           @open="ouvrirPlante"
           @toggle-favorite="basculerFavori"
         />
@@ -118,6 +123,10 @@ import PlantCard from '@/components/PlantCard.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
+import { useSettingsStore } from '@/stores/settings.store'
+import { useThresholdProfilesStore } from '@/stores/threshold-profiles.store'
+import { isMeasurementStale } from '@/utils/measurement-freshness.util'
+import { evaluatePlantHealth } from '@/utils/plant-health.util'
 import type { PlantCategory, PlantStatus } from '@/types/plant.types'
 import { PLANT_CATEGORY_OPTIONS } from '@/utils/plant-options.util'
 
@@ -127,10 +136,31 @@ type StatusFilter = PlantStatus | 'all'
 const router = useRouter()
 const plantsStore = usePlantsStore()
 const measurementsStore = useMeasurementsStore()
+const settingsStore = useSettingsStore()
+const thresholdProfilesStore = useThresholdProfilesStore()
 
 const rechercheNom = ref('')
 const categorieSelectionnee = ref<CategoryFilter>('all')
 const statusSelectionne = ref<StatusFilter>('all')
+
+const statusByPlantId = computed<Record<string, PlantStatus>>(() => {
+  const staleThreshold = settingsStore.parametres.staleDataThresholdMinutes
+
+  return plantsStore.plantes.reduce<Record<string, PlantStatus>>((acc, plante) => {
+    const mesure = measurementsStore.derniereMesureParPlante[plante.id] ?? null
+    const profil = thresholdProfilesStore.getProfilParId(plante.thresholdProfileId)
+
+    const assessment = evaluatePlantHealth({
+      measurement: mesure,
+      thresholdProfile: profil,
+      isStale: isMeasurementStale(mesure?.measuredAt, staleThreshold),
+      staleThresholdMinutes: staleThreshold,
+    })
+
+    acc[plante.id] = assessment.status
+    return acc
+  }, {})
+})
 
 const plantesFiltrees = computed(() => {
   const recherche = rechercheNom.value.trim().toLowerCase()
@@ -138,7 +168,8 @@ const plantesFiltrees = computed(() => {
   return plantsStore.plantes.filter((plante) => {
     const matchCategorie =
       categorieSelectionnee.value === 'all' || plante.category === categorieSelectionnee.value
-    const matchStatut = statusSelectionne.value === 'all' || plante.status === statusSelectionne.value
+    const statutEvalue = statusByPlantId.value[plante.id] ?? plante.status
+    const matchStatut = statusSelectionne.value === 'all' || statutEvalue === statusSelectionne.value
     const matchNom = recherche === '' || plante.name.toLowerCase().includes(recherche)
 
     return matchCategorie && matchStatut && matchNom
@@ -146,10 +177,15 @@ const plantesFiltrees = computed(() => {
 })
 
 const chargerDashboard = async (): Promise<void> => {
-  await plantsStore.chargerPlantes()
+  await Promise.all([
+    plantsStore.chargerPlantes(),
+    settingsStore.chargerParametres(),
+    thresholdProfilesStore.chargerProfils({ ensureDefaults: true }),
+  ])
 
   const plantIds = plantsStore.plantes.map((plante) => plante.id)
   await measurementsStore.chargerDernieresMesures(plantIds)
+  await plantsStore.synchroniserStatutsRecalcules(statusByPlantId.value)
 }
 
 const ouvrirPlante = async (plantId: string): Promise<void> => {

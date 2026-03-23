@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { MeasurementRepository, type CreateMeasurementInput } from '@/database'
+import type { HistoryRange } from '@/types/app-settings.types'
 import type { Measurement } from '@/types/measurement.types'
 import { toErrorMessage } from '@/stores/store.utils'
 
@@ -11,6 +12,22 @@ interface MeasurementsState {
 }
 
 const measurementRepository = new MeasurementRepository()
+
+const toRangeStartIso = (range: HistoryRange): string | null => {
+  const now = Date.now()
+
+  switch (range) {
+    case '24h':
+      return new Date(now - 24 * 60 * 60 * 1000).toISOString()
+    case '7d':
+      return new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+    case '30d':
+      return new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
+    case 'all':
+    default:
+      return null
+  }
+}
 
 export const useMeasurementsStore = defineStore('measurements', {
   state: (): MeasurementsState => ({
@@ -30,6 +47,28 @@ export const useMeasurementsStore = defineStore('measurements', {
         this.derniereMesureParPlante[plantId] = mesures.length > 0 ? mesures[0] : null
       } catch (error) {
         this.erreur = toErrorMessage(error, 'Impossible de charger les mesures')
+      } finally {
+        this.estChargement = false
+      }
+    },
+    async chargerHistoriqueParPeriode(
+      plantId: string,
+      range: HistoryRange,
+      options: { limit?: number } = {},
+    ): Promise<Measurement[]> {
+      this.estChargement = true
+      this.erreur = null
+
+      try {
+        const limit = options.limit ?? 600
+        const sinceIso = toRangeStartIso(range)
+        const mesures = await measurementRepository.listByPlantIdSince(plantId, sinceIso, limit)
+        this.mesuresParPlante[plantId] = mesures
+        this.derniereMesureParPlante[plantId] = mesures.length > 0 ? mesures[0] : null
+        return mesures
+      } catch (error) {
+        this.erreur = toErrorMessage(error, "Impossible de charger l'historique des mesures")
+        return []
       } finally {
         this.estChargement = false
       }

@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
 import { ensureDemoData } from '@/services/demo-data.service'
+import { syncAllPlantStatusesAtStartup } from '@/services/plant-status-sync.service'
 import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
@@ -38,6 +39,7 @@ router.isReady().then(async () => {
   try {
     await initializeDatabase()
     await ensureDemoData()
+    await syncAllPlantStatusesAtStartup()
   } catch (error) {
     console.warn('[database] initialization failed:', error)
   }

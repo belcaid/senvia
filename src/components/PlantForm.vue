@@ -50,13 +50,16 @@
           interface="popover"
           label="Profil de seuils"
           label-placement="stacked"
+          @ionBlur="() => validerChamp('thresholdProfileId')"
         >
-          <ion-select-option value="">Aucun profil</ion-select-option>
           <ion-select-option v-for="profil in thresholdProfiles" :key="profil.id" :value="profil.id">
             {{ profil.name }}
           </ion-select-option>
         </ion-select>
       </ion-item>
+      <ion-note v-if="erreurs.thresholdProfileId" class="error-note" color="danger">
+        {{ erreurs.thresholdProfileId }}
+      </ion-note>
 
       <ion-item>
         <ion-label>Statut favori</ion-label>
@@ -132,6 +135,7 @@ interface PlantFormErrors {
   categorie: string
   emplacement: string
   icone: string
+  thresholdProfileId: string
 }
 
 const defaultValues = (): PlantFormValues => ({
@@ -148,6 +152,7 @@ const createEmptyErrors = (): PlantFormErrors => ({
   categorie: '',
   emplacement: '',
   icone: '',
+  thresholdProfileId: '',
 })
 
 const props = withDefaults(
@@ -189,6 +194,7 @@ function resetErrors(): void {
   erreurs.categorie = emptyErrors.categorie
   erreurs.emplacement = emptyErrors.emplacement
   erreurs.icone = emptyErrors.icone
+  erreurs.thresholdProfileId = emptyErrors.thresholdProfileId
 }
 
 watch(
@@ -211,6 +217,23 @@ watch(
   { immediate: true, deep: true },
 )
 
+watch(
+  () => props.thresholdProfiles,
+  (profiles) => {
+    if (profiles.length === 0) {
+      return
+    }
+
+    const currentId = form.thresholdProfileId
+    const hasCurrent = currentId !== null && profiles.some((profile) => profile.id === currentId)
+
+    if (!hasCurrent) {
+      form.thresholdProfileId = profiles[0].id
+    }
+  },
+  { immediate: true, deep: true },
+)
+
 const validerChamp = (champ: keyof PlantFormErrors): boolean => {
   switch (champ) {
     case 'nom':
@@ -225,13 +248,16 @@ const validerChamp = (champ: keyof PlantFormErrors): boolean => {
     case 'icone':
       erreurs.icone = form.icone.trim() === '' ? 'L icone est obligatoire.' : ''
       return erreurs.icone === ''
+    case 'thresholdProfileId':
+      erreurs.thresholdProfileId = form.thresholdProfileId === null ? 'Le profil de seuils est obligatoire.' : ''
+      return erreurs.thresholdProfileId === ''
     default:
       return true
   }
 }
 
 const validerFormulaire = (): boolean => {
-  const champs: Array<keyof PlantFormErrors> = ['nom', 'categorie', 'emplacement', 'icone']
+  const champs: Array<keyof PlantFormErrors> = ['nom', 'categorie', 'emplacement', 'icone', 'thresholdProfileId']
   return champs.every((champ) => validerChamp(champ))
 }
 

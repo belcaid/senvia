@@ -18,6 +18,12 @@ const DEFAULT_THRESHOLD_PROFILES: CreateThresholdProfileInput[] = [
     lightMax: 1500,
     conductivityMin: 300,
     conductivityMax: 1800,
+    weights: {
+      moisture: 0.4,
+      temperature: 0.2,
+      light: 0.25,
+      conductivity: 0.15,
+    },
   },
   {
     id: 'profile-cactus-succulent',
@@ -30,6 +36,12 @@ const DEFAULT_THRESHOLD_PROFILES: CreateThresholdProfileInput[] = [
     lightMax: 4000,
     conductivityMin: 150,
     conductivityMax: 1200,
+    weights: {
+      moisture: 0.45,
+      temperature: 0.2,
+      light: 0.25,
+      conductivity: 0.1,
+    },
   },
   {
     id: 'profile-foliage-humid',
@@ -42,6 +54,12 @@ const DEFAULT_THRESHOLD_PROFILES: CreateThresholdProfileInput[] = [
     lightMax: 2200,
     conductivityMin: 500,
     conductivityMax: 2200,
+    weights: {
+      moisture: 0.5,
+      temperature: 0.2,
+      light: 0.2,
+      conductivity: 0.1,
+    },
   },
 ]
 
@@ -58,13 +76,28 @@ export const ensureDefaultThresholdProfiles = async (): Promise<ThresholdProfile
 
   ensureDefaultsPromise = (async () => {
     const existingProfiles = await thresholdProfileRepository.findAll()
-
-    if (existingProfiles.length > 0) {
-      return existingProfiles
-    }
+    const existingById = new Map(existingProfiles.map((profile) => [profile.id, profile]))
 
     for (const profile of DEFAULT_THRESHOLD_PROFILES) {
-      await thresholdProfileRepository.create(profile)
+      const existing = existingById.get(profile.id ?? '')
+
+      if (!existing) {
+        await thresholdProfileRepository.create(profile)
+        continue
+      }
+
+      await thresholdProfileRepository.update(existing.id, {
+        name: profile.name,
+        tempMin: profile.tempMin,
+        tempMax: profile.tempMax,
+        moistureMin: profile.moistureMin,
+        moistureMax: profile.moistureMax,
+        lightMin: profile.lightMin,
+        lightMax: profile.lightMax,
+        conductivityMin: profile.conductivityMin,
+        conductivityMax: profile.conductivityMax,
+        weights: profile.weights ?? null,
+      })
     }
 
     return thresholdProfileRepository.findAll()

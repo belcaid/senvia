@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { PlantRepository, type CreatePlantInput, type UpdatePlantInput } from '@/database'
-import type { Plant } from '@/types/plant.types'
+import type { Plant, PlantStatus } from '@/types/plant.types'
 import { toErrorMessage } from '@/stores/store.utils'
 
 interface PlantsState {
@@ -77,6 +77,34 @@ export const usePlantsStore = defineStore('plants', {
     },
     async marquerFavori(id: string, estFavori: boolean): Promise<Plant | null> {
       return this.modifierPlante(id, { isFavorite: estFavori })
+    },
+    async synchroniserStatutsRecalcules(statusesByPlantId: Record<string, PlantStatus>): Promise<void> {
+      this.erreur = null
+
+      try {
+        const updates = Object.entries(statusesByPlantId).filter(([plantId, nextStatus]) => {
+          const plante = this.getPlanteParId(plantId)
+          return plante !== undefined && plante.status !== nextStatus
+        })
+
+        if (updates.length === 0) {
+          return
+        }
+
+        const updatedPlants = await Promise.all(
+          updates.map(async ([plantId, nextStatus]) => plantRepository.updateStatus(plantId, nextStatus)),
+        )
+
+        const updatedById = new Map(
+          updatedPlants
+            .filter((plante): plante is Plant => plante !== null)
+            .map((plante) => [plante.id, plante]),
+        )
+
+        this.plantes = this.plantes.map((plante) => updatedById.get(plante.id) ?? plante)
+      } catch (error) {
+        this.erreur = toErrorMessage(error, 'Impossible de synchroniser les statuts des plantes')
+      }
     },
   },
 })

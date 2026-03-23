@@ -116,6 +116,26 @@ export class MeasurementRepository {
     return rows.map(mapMeasurementRow)
   }
 
+  async listByPlantIdSince(plantId: string, sinceIso: string | null, limit = 200): Promise<Measurement[]> {
+    if (sinceIso === null) {
+      return this.listByPlantId(plantId, limit)
+    }
+
+    const rows = await queryRows<MeasurementRow>(
+      `
+      SELECT *
+      FROM measurements
+      WHERE plant_id = ?
+        AND measured_at >= ?
+      ORDER BY measured_at DESC
+      LIMIT ?;
+      `,
+      [plantId, sinceIso, limit],
+    )
+
+    return rows.map(mapMeasurementRow)
+  }
+
   async listBySensorId(sensorId: string, limit = 200): Promise<Measurement[]> {
     const rows = await queryRows<MeasurementRow>(
       'SELECT * FROM measurements WHERE sensor_id = ? ORDER BY measured_at DESC LIMIT ?;',
