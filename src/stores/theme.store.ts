@@ -18,8 +18,20 @@ export const useThemeStore = defineStore('theme', {
         return
       }
 
-      this.mode = await initializeTheme()
-      this.isInitialized = true
+      try {
+        this.mode = await initializeTheme()
+      } catch (error) {
+        this.mode = 'light'
+
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', 'light')
+          document.documentElement.style.colorScheme = 'light'
+        }
+
+        console.warn('[theme] initialization failed, fallback to light mode:', error)
+      } finally {
+        this.isInitialized = true
+      }
     },
     async setMode(mode: ThemeMode): Promise<void> {
       await setThemeMode(mode)

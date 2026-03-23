@@ -1,9 +1,7 @@
-import { Preferences } from '@capacitor/preferences'
-import { THEME_PREFERENCE_KEY, type ThemeMode } from '@/types/theme.types'
+import { getThemeModePreference, setThemeModePreference } from '@/services/preferences.service'
+import type { ThemeMode } from '@/types/theme.types'
 
 const DARK_MEDIA_QUERY = '(prefers-color-scheme: dark)'
-
-const isThemeMode = (value: string | null): value is ThemeMode => value === 'light' || value === 'dark'
 
 const getSystemTheme = (): ThemeMode => {
   if (typeof window === 'undefined') {
@@ -24,8 +22,8 @@ const applyThemeToDom = (mode: ThemeMode): void => {
 }
 
 export const initializeTheme = async (): Promise<ThemeMode> => {
-  const { value } = await Preferences.get({ key: THEME_PREFERENCE_KEY })
-  const initialTheme = isThemeMode(value) ? value : getSystemTheme()
+  const storedTheme = await getThemeModePreference()
+  const initialTheme = storedTheme ?? getSystemTheme()
 
   applyThemeToDom(initialTheme)
 
@@ -35,8 +33,5 @@ export const initializeTheme = async (): Promise<ThemeMode> => {
 export const setThemeMode = async (mode: ThemeMode): Promise<void> => {
   applyThemeToDom(mode)
 
-  await Preferences.set({
-    key: THEME_PREFERENCE_KEY,
-    value: mode,
-  })
+  await setThemeModePreference(mode)
 }
