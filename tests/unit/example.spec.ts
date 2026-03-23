@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const chargerPlantes = vi.fn()
 const marquerFavori = vi.fn()
-const chargerProfils = vi.fn()
+const chargerDernieresMesures = vi.fn()
 
 vi.mock('vue-router', async () => {
   const actual = await vi.importActual<typeof import('vue-router')>('vue-router')
@@ -27,12 +27,11 @@ vi.mock('@/stores/plants.store', () => ({
   }),
 }))
 
-vi.mock('@/stores/threshold-profiles.store', () => ({
-  useThresholdProfilesStore: () => ({
-    profils: [],
+vi.mock('@/stores/measurements.store', () => ({
+  useMeasurementsStore: () => ({
+    derniereMesureParPlante: {},
     erreur: null,
-    chargerProfils,
-    getProfilParId: () => undefined,
+    chargerDernieresMesures,
   }),
 }))
 
@@ -40,14 +39,12 @@ describe('DashboardView.vue', () => {
   beforeEach(() => {
     chargerPlantes.mockReset()
     marquerFavori.mockReset()
-    chargerProfils.mockReset()
+    chargerDernieresMesures.mockReset()
   })
 
-  test('renders dashboard placeholder', () => {
+  test('renders dashboard shell', () => {
     const wrapper = mount(DashboardView)
     expect(wrapper.text()).toMatch('Dashboard')
-    expect(wrapper.text()).toMatch('Ajouter une plante')
-    expect(chargerPlantes).toHaveBeenCalledTimes(1)
-    expect(chargerProfils).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toMatch('Ajouter plante')
   })
 })

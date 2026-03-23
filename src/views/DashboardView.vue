@@ -6,7 +6,7 @@
         <ion-buttons slot="end">
           <ion-button router-link="/plants/new">
             <ion-icon slot="start" :icon="addOutline" />
-            Ajouter
+            Ajouter plante
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -15,68 +15,78 @@
     <ion-content class="ion-padding">
       <ion-searchbar
         v-model="rechercheNom"
-        placeholder="Rechercher une plante par nom"
+        placeholder="Rechercher une plante"
         show-clear-button="focus"
       />
 
-      <ion-item>
-        <ion-select
-          v-model="categorieSelectionnee"
-          interface="popover"
-          label="Categorie"
-          label-placement="stacked"
-        >
-          <ion-select-option value="all">Toutes les categories</ion-select-option>
-          <ion-select-option
-            v-for="categorie in PLANT_CATEGORY_OPTIONS"
-            :key="categorie.value"
-            :value="categorie.value"
+      <div class="filters-grid">
+        <ion-item>
+          <ion-select
+            v-model="categorieSelectionnee"
+            interface="popover"
+            label="Categorie"
+            label-placement="stacked"
           >
-            {{ categorie.label }}
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
+            <ion-select-option value="all">Toutes</ion-select-option>
+            <ion-select-option
+              v-for="option in PLANT_CATEGORY_OPTIONS"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            v-model="statusSelectionne"
+            interface="popover"
+            label="Statut"
+            label-placement="stacked"
+          >
+            <ion-select-option value="all">Tous</ion-select-option>
+            <ion-select-option value="healthy">Saine</ion-select-option>
+            <ion-select-option value="warning">Surveillance</ion-select-option>
+            <ion-select-option value="critical">Critique</ion-select-option>
+            <ion-select-option value="stale_data">Donnees anciennes</ion-select-option>
+            <ion-select-option value="unknown">Inconnu</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
 
       <ion-note class="results-count" color="medium">
-        {{ nombreResultats }} plante{{ nombreResultats > 1 ? 's' : '' }}
+        {{ plantesFiltrees.length }} plante{{ plantesFiltrees.length > 1 ? 's' : '' }}
       </ion-note>
 
       <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
+      <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
+        {{ measurementsStore.erreur }}
+      </ion-note>
 
       <div v-if="plantsStore.estChargement" class="loading-container">
         <ion-spinner name="crescent" />
       </div>
 
-      <ion-list v-else-if="plantesFiltrees.length > 0" inset>
-        <ion-item
+      <div v-else-if="plantesFiltrees.length > 0" class="cards-grid">
+        <plant-card
           v-for="plante in plantesFiltrees"
           :key="plante.id"
-          button
-          detail
-          @click="ouvrirPlante(plante.id)"
-        >
-          <ion-icon slot="start" class="plant-icon" :icon="getPlantIcon(plante.icon)" />
-
-          <ion-label>
-            <h2>{{ plante.name }}</h2>
-            <p>{{ getCategoryLabel(plante.category) }} - {{ plante.location }}</p>
-            <p>{{ profileLabel(plante.thresholdProfileId) }}</p>
-          </ion-label>
-
-          <ion-button fill="clear" slot="end" @click.stop="basculerFavori(plante.id, plante.isFavorite)">
-            <ion-icon :icon="plante.isFavorite ? heart : heartOutline" />
-          </ion-button>
-        </ion-item>
-      </ion-list>
+          :plant="plante"
+          :measurement="measurementsStore.derniereMesureParPlante[plante.id] ?? null"
+          @open="ouvrirPlante"
+          @toggle-favorite="basculerFavori"
+        />
+      </div>
 
       <screen-placeholder
         v-else
         title="Aucune plante"
-        subtitle="Commence par ajouter ta premiere plante"
-        description="Utilise les filtres categorie et recherche pour retrouver rapidement une plante."
+        subtitle="Ajoute ta premiere plante"
+        description="Utilise recherche et filtres pour retrouver rapidement tes plantes."
       >
         <template #actions>
-          <ion-button router-link="/plants/new">Ajouter une plante</ion-button>
+          <ion-button router-link="/plants/new">Ajouter plante</ion-button>
         </template>
       </screen-placeholder>
     </ion-content>
@@ -84,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   IonButton,
   IonButtons,
@@ -92,8 +102,6 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonLabel,
-  IonList,
   IonNote,
   IonPage,
   IonSearchbar,
@@ -102,23 +110,27 @@ import {
   IonSpinner,
   IonTitle,
   IonToolbar,
+  onIonViewWillEnter,
 } from '@ionic/vue'
-import { addOutline, heart, heartOutline } from 'ionicons/icons'
+import { addOutline } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
+import PlantCard from '@/components/PlantCard.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
+import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
-import { useThresholdProfilesStore } from '@/stores/threshold-profiles.store'
-import type { PlantCategory } from '@/types/plant.types'
-import { getCategoryLabel, getPlantIcon, PLANT_CATEGORY_OPTIONS } from '@/utils/plant-options.util'
+import type { PlantCategory, PlantStatus } from '@/types/plant.types'
+import { PLANT_CATEGORY_OPTIONS } from '@/utils/plant-options.util'
 
 type CategoryFilter = PlantCategory | 'all'
+type StatusFilter = PlantStatus | 'all'
 
 const router = useRouter()
 const plantsStore = usePlantsStore()
-const thresholdProfilesStore = useThresholdProfilesStore()
+const measurementsStore = useMeasurementsStore()
 
 const rechercheNom = ref('')
 const categorieSelectionnee = ref<CategoryFilter>('all')
+const statusSelectionne = ref<StatusFilter>('all')
 
 const plantesFiltrees = computed(() => {
   const recherche = rechercheNom.value.trim().toLowerCase()
@@ -126,61 +138,64 @@ const plantesFiltrees = computed(() => {
   return plantsStore.plantes.filter((plante) => {
     const matchCategorie =
       categorieSelectionnee.value === 'all' || plante.category === categorieSelectionnee.value
+    const matchStatut = statusSelectionne.value === 'all' || plante.status === statusSelectionne.value
     const matchNom = recherche === '' || plante.name.toLowerCase().includes(recherche)
 
-    return matchCategorie && matchNom
+    return matchCategorie && matchStatut && matchNom
   })
 })
 
-const nombreResultats = computed(() => plantesFiltrees.value.length)
+const chargerDashboard = async (): Promise<void> => {
+  await plantsStore.chargerPlantes()
 
-const ouvrirPlante = async (id: string): Promise<void> => {
-  await router.push(`/plants/${id}`)
+  const plantIds = plantsStore.plantes.map((plante) => plante.id)
+  await measurementsStore.chargerDernieresMesures(plantIds)
 }
 
-const basculerFavori = async (id: string, estFavoriActuel: boolean): Promise<void> => {
-  await plantsStore.marquerFavori(id, !estFavoriActuel)
+const ouvrirPlante = async (plantId: string): Promise<void> => {
+  await router.push(`/plants/${plantId}`)
 }
 
-const profileLabel = (profileId: string | null): string => {
-  if (profileId === null) {
-    return 'Profil de seuils: aucun'
-  }
-
-  const profile = thresholdProfilesStore.getProfilParId(profileId)
-  return `Profil de seuils: ${profile?.name ?? 'inconnu'}`
+const basculerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Promise<void> => {
+  await plantsStore.marquerFavori(plantId, !isCurrentlyFavorite)
 }
 
-onMounted(() => {
-  void Promise.all([
-    plantsStore.chargerPlantes(),
-    thresholdProfilesStore.chargerProfils({ ensureDefaults: true }),
-  ])
+onIonViewWillEnter(() => {
+  void chargerDashboard()
 })
 </script>
 
 <style scoped>
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.cards-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
 .loading-container {
   display: flex;
   justify-content: center;
-  padding: 1.5rem 0;
+  padding: 2rem 0;
 }
 
 .feedback {
   display: block;
-  margin: 0.25rem 0.35rem 0.75rem;
+  margin: 0.3rem 0.2rem;
 }
 
 .results-count {
   display: block;
-  margin: 0.4rem 0.35rem 0.75rem;
+  margin: 0.55rem 0.2rem;
 }
 
-.plant-icon {
-  color: var(--ion-color-primary);
-  background: rgba(var(--ion-color-primary-rgb), 0.12);
-  border-radius: 999px;
-  padding: 0.4rem;
-  font-size: 1.3rem;
+@media (max-width: 680px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

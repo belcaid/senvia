@@ -44,6 +44,22 @@ export const useMeasurementsStore = defineStore('measurements', {
         this.erreur = toErrorMessage(error, 'Impossible de charger la derniere mesure')
       }
     },
+    async chargerDernieresMesures(plantIds: string[]): Promise<void> {
+      this.erreur = null
+
+      try {
+        const idsUniques = [...new Set(plantIds.filter((id) => id.trim() !== ''))]
+
+        await Promise.all(
+          idsUniques.map(async (plantId) => {
+            const mesure = await measurementRepository.getLatestByPlantId(plantId)
+            this.derniereMesureParPlante[plantId] = mesure
+          }),
+        )
+      } catch (error) {
+        this.erreur = toErrorMessage(error, 'Impossible de charger les dernieres mesures')
+      }
+    },
     async ajouterMesure(input: CreateMeasurementInput): Promise<Measurement | null> {
       this.erreur = null
 
