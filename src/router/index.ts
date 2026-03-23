@@ -62,4 +62,21 @@ const router = createRouter({
   routes,
 })
 
+const blurActiveElement = (): void => {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const activeElement = document.activeElement
+
+  if (activeElement instanceof HTMLElement && activeElement !== document.body) {
+    activeElement.blur()
+  }
+}
+
+router.beforeEach((_, __, next) => {
+  blurActiveElement()
+  next()
+})
+
 export default router
