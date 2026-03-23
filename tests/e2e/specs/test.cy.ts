@@ -1,6 +1,9 @@
-describe('My First Test', () => {
-  it('Visits the app root url', () => {
+describe('Tabs navigation', () => {
+  it('loads dashboard tab by default', () => {
     cy.visit('/')
-    cy.contains('#container', 'Ready to create an app?')
+    cy.contains('Dashboard')
+    cy.contains('Favoris')
+    cy.contains('Alertes')
+    cy.contains('Reglages')
   })
 })

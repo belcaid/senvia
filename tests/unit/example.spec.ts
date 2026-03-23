@@ -1,10 +1,11 @@
 import { mount } from '@vue/test-utils'
-import HomePage from '@/views/HomePage.vue'
+import DashboardView from '@/views/DashboardView.vue'
 import { describe, expect, test } from 'vitest'
 
-describe('HomePage.vue', () => {
-  test('renders home vue', () => {
-    const wrapper = mount(HomePage)
-    expect(wrapper.text()).toMatch('Ready to create an app?')
+describe('DashboardView.vue', () => {
+  test('renders dashboard placeholder', () => {
+    const wrapper = mount(DashboardView)
+    expect(wrapper.text()).toMatch('Dashboard')
+    expect(wrapper.text()).toMatch('Ajouter une plante')
   })
 })
