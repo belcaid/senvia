@@ -240,6 +240,18 @@ onIonViewWillEnter(() => {
   --background: rgba(var(--ion-color-primary-rgb), 0.06);
 }
 
+:deep(ion-list) {
+  background: transparent;
+}
+
+:deep(ion-list ion-item) {
+  --inner-padding-start: 0.8rem;
+  --inner-padding-end: 0.7rem;
+  border: 1px solid var(--senvia-card-border);
+  border-radius: 14px;
+  margin-bottom: 0.6rem;
+}
+
 @media (max-width: 680px) {
   .filters-grid {
     grid-template-columns: 1fr;

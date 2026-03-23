@@ -71,6 +71,7 @@
         <ion-row>
           <ion-col v-for="option in PLANT_ICON_OPTIONS" :key="option.value" size="4">
             <ion-button
+              type="button"
               class="icon-choice"
               :fill="form.icone === option.value ? 'solid' : 'outline'"
               expand="block"
@@ -86,10 +87,10 @@
     </section>
 
     <div class="form-actions">
-      <ion-button type="submit" :disabled="isSubmitting" expand="block">
+      <ion-button type="button" :disabled="isSubmitting" expand="block" @click="soumettre">
         {{ submitLabel }}
       </ion-button>
-      <ion-button v-if="showCancel" fill="clear" expand="block" @click="emit('cancel')">
+      <ion-button v-if="showCancel" type="button" fill="clear" expand="block" @click="emit('cancel')">
         Annuler
       </ion-button>
     </div>

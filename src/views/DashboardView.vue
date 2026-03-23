@@ -172,9 +172,16 @@ onIonViewWillEnter(() => {
   gap: 0.6rem;
 }
 
+.filters-grid ion-item {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
 .cards-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 0.9rem;
+  align-items: start;
 }
 
 .loading-container {

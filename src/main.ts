@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
+import { ensureDemoData } from '@/services/demo-data.service'
 import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
@@ -33,9 +34,13 @@ const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
 router.isReady().then(async () => {
   await themeStore.init()
-  app.mount('#app')
 
-  void initializeDatabase().catch((error) => {
+  try {
+    await initializeDatabase()
+    await ensureDemoData()
+  } catch (error) {
     console.warn('[database] initialization failed:', error)
-  })
+  }
+
+  app.mount('#app')
 })

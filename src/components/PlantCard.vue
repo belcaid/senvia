@@ -6,7 +6,7 @@
           <ion-icon class="plant-card__icon" :icon="plantIcon" />
           <div>
             <ion-card-title>{{ plant.name }}</ion-card-title>
-            <ion-card-subtitle>{{ categoryLabel }}</ion-card-subtitle>
+            <ion-card-subtitle>{{ plant.location }}</ion-card-subtitle>
           </div>
         </div>
 
@@ -102,6 +102,18 @@ const updatedAtLabel = computed(() => {
 <style scoped>
 .plant-card {
   margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  backdrop-filter: blur(6px);
+}
+
+.plant-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: linear-gradient(90deg, rgba(var(--ion-color-primary-rgb), 0.95), rgba(255, 255, 255, 0));
 }
 
 .plant-card__top {
@@ -140,6 +152,13 @@ const updatedAtLabel = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem 0.8rem;
+}
+
+.measurements-grid p {
+  background: var(--senvia-surface-2);
+  border: 1px solid var(--senvia-card-border);
+  border-radius: 10px;
+  padding: 0.35rem 0.45rem;
 }
 
 .measurements-grid p,

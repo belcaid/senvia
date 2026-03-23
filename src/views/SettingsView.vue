@@ -61,6 +61,16 @@
           <ion-label>Plateforme</ion-label>
           <ion-note slot="end">{{ appPlatform }}</ion-note>
         </ion-item>
+        <ion-item lines="none">
+          <ion-button
+            expand="block"
+            fill="outline"
+            :disabled="isReloadingDemo"
+            @click="confirmerRechargementDemo"
+          >
+            {{ isReloadingDemo ? 'Rechargement...' : 'Recharger donnees demo' }}
+          </ion-button>
+        </ion-item>
       </ion-list>
 
       <ion-list inset>
@@ -95,6 +105,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  alertController,
+  IonButton,
   IonContent,
   IonHeader,
   IonInput,
@@ -113,6 +125,7 @@ import { Capacitor } from '@capacitor/core'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
 import { useSettingsStore } from '@/stores/settings.store'
+import { resetAndSeedDemoData } from '@/services/demo-data.service'
 import { formatDateTime } from '@/utils/date.util'
 
 const appName = 'Senvia'
@@ -124,6 +137,7 @@ const sensorsStore = useSensorsStore()
 const plantsStore = usePlantsStore()
 
 const heureRappel = ref('')
+const isReloadingDemo = ref(false)
 
 const settings = computed(() => settingsStore.parametres)
 const isDarkMode = computed(() => settings.value.themeMode === 'dark')
@@ -190,6 +204,33 @@ const chargerReglages = async (): Promise<void> => {
     sensorsStore.chargerCapteurs(),
     plantsStore.chargerPlantes(),
   ])
+}
+
+const confirmerRechargementDemo = async (): Promise<void> => {
+  const confirmation = await alertController.create({
+    header: 'Recharger donnees demo',
+    message: 'Cela supprimera les donnees locales actuelles puis recreera le jeu de demo. Continuer ?',
+    buttons: [
+      { text: 'Annuler', role: 'cancel' },
+      { text: 'Recharger', role: 'confirm' },
+    ],
+  })
+
+  await confirmation.present()
+  const { role } = await confirmation.onDidDismiss()
+
+  if (role !== 'confirm') {
+    return
+  }
+
+  isReloadingDemo.value = true
+
+  try {
+    await resetAndSeedDemoData()
+    await Promise.all([plantsStore.chargerPlantes(), sensorsStore.chargerCapteurs()])
+  } finally {
+    isReloadingDemo.value = false
+  }
 }
 
 onIonViewWillEnter(() => {

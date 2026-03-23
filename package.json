@@ -4,6 +4,11 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "prepare:web-sqlite": "mkdir -p public/assets && cp node_modules/sql.js/dist/sql-wasm.wasm public/assets/sql-wasm.wasm",
+    "predev": "npm run prepare:web-sqlite",
+    "prebuild": "npm run prepare:web-sqlite",
+    "ionic:serve": "npm run dev",
+    "ionic:build": "npm run build",
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
@@ -28,6 +33,7 @@
     "@ionic/vue-router": "^8.0.0",
     "ionicons": "^7.0.0",
     "pinia": "^3.0.4",
+    "sql.js": "1.11.0",
     "vue": "^3.3.0",
     "vue-router": "^4.2.0"
   },

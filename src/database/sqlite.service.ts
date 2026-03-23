@@ -19,6 +19,7 @@ let sqliteConnection: SQLiteConnection | null = null
 let databaseConnection: SQLiteDBConnection | null = null
 let initializationPromise: Promise<void> | null = null
 let isWebStoreInitialized = false
+let jeepSqliteElementsDefined = false
 
 const getSQLiteConnection = (): SQLiteConnection => {
   if (sqliteConnection === null) {
@@ -26,6 +27,24 @@ const getSQLiteConnection = (): SQLiteConnection => {
   }
 
   return sqliteConnection
+}
+
+const defineJeepSqliteCustomElement = async (): Promise<void> => {
+  if (Capacitor.getPlatform() !== 'web' || jeepSqliteElementsDefined) {
+    return
+  }
+
+  if (typeof window === 'undefined' || typeof customElements === 'undefined') {
+    return
+  }
+
+  if (!customElements.get('jeep-sqlite')) {
+    const loader = await import('jeep-sqlite/loader')
+    loader.defineCustomElements(window)
+  }
+
+  await customElements.whenDefined('jeep-sqlite')
+  jeepSqliteElementsDefined = true
 }
 
 const ensureWebStore = async (): Promise<void> => {
@@ -36,6 +55,8 @@ const ensureWebStore = async (): Promise<void> => {
   if (typeof document === 'undefined') {
     return
   }
+
+  await defineJeepSqliteCustomElement()
 
   if (!document.querySelector('jeep-sqlite')) {
     const jeepSqliteElement = document.createElement('jeep-sqlite')
