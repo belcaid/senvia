@@ -91,15 +91,15 @@ export const usePlantsStore = defineStore('plants', {
           return
         }
 
-        const updatedPlants = await Promise.all(
-          updates.map(async ([plantId, nextStatus]) => plantRepository.updateStatus(plantId, nextStatus)),
-        )
+        const updatedById = new Map<string, Plant>()
 
-        const updatedById = new Map(
-          updatedPlants
-            .filter((plante): plante is Plant => plante !== null)
-            .map((plante) => [plante.id, plante]),
-        )
+        for (const [plantId, nextStatus] of updates) {
+          const updated = await plantRepository.updateStatus(plantId, nextStatus)
+
+          if (updated !== null) {
+            updatedById.set(updated.id, updated)
+          }
+        }
 
         this.plantes = this.plantes.map((plante) => updatedById.get(plante.id) ?? plante)
       } catch (error) {

@@ -1,20 +1,47 @@
 import { AlertRepository, MeasurementRepository, PlantRepository, SensorDeviceRepository, runStatement } from '@/database'
+import { queryRows } from '@/database/sqlite.service'
 import { ensureDefaultThresholdProfiles } from '@/services/threshold-profiles.service'
+import { Preferences } from '@capacitor/preferences'
 
 const plantRepository = new PlantRepository()
 const sensorRepository = new SensorDeviceRepository()
 const measurementRepository = new MeasurementRepository()
 const alertRepository = new AlertRepository()
+const DEMO_DATA_SEEDED_KEY = 'demo_data_seeded_v1'
 
 const minutesAgo = (minutes: number): string => new Date(Date.now() - minutes * 60_000).toISOString()
 
-export const ensureDemoData = async (): Promise<boolean> => {
-  const existingPlants = await plantRepository.findAll()
+interface CountRow {
+  count: number
+}
 
-  if (existingPlants.length > 0) {
-    return false
-  }
+const getTableCount = async (tableName: string): Promise<number> => {
+  const rows = await queryRows<CountRow>(`SELECT COUNT(*) AS count FROM ${tableName};`)
+  const value = rows[0]?.count
+  return typeof value === 'number' ? value : Number(value) || 0
+}
 
+const hasAnyBusinessData = async (): Promise<boolean> => {
+  const [plantsCount, sensorsCount, measurementsCount, alertsCount] = await Promise.all([
+    getTableCount('plants'),
+    getTableCount('sensor_devices'),
+    getTableCount('measurements'),
+    getTableCount('alerts'),
+  ])
+
+  return plantsCount > 0 || sensorsCount > 0 || measurementsCount > 0 || alertsCount > 0
+}
+
+const isDemoDataAlreadySeeded = async (): Promise<boolean> => {
+  const { value } = await Preferences.get({ key: DEMO_DATA_SEEDED_KEY })
+  return value === 'true'
+}
+
+const markDemoDataAsSeeded = async (): Promise<void> => {
+  await Preferences.set({ key: DEMO_DATA_SEEDED_KEY, value: 'true' })
+}
+
+const seedDemoData = async (): Promise<void> => {
   await ensureDefaultThresholdProfiles()
 
   await plantRepository.create({
@@ -172,7 +199,20 @@ export const ensureDemoData = async (): Promise<boolean> => {
     createdAt: minutesAgo(9),
     measurementId: null,
   })
+}
 
+export const ensureDemoData = async (): Promise<boolean> => {
+  if (await isDemoDataAlreadySeeded()) {
+    return false
+  }
+
+  if (await hasAnyBusinessData()) {
+    await markDemoDataAsSeeded()
+    return false
+  }
+
+  await seedDemoData()
+  await markDemoDataAsSeeded()
   return true
 }
 
@@ -185,5 +225,6 @@ const clearBusinessData = async (): Promise<void> => {
 
 export const resetAndSeedDemoData = async (): Promise<void> => {
   await clearBusinessData()
-  await ensureDemoData()
+  await seedDemoData()
+  await markDemoDataAsSeeded()
 }

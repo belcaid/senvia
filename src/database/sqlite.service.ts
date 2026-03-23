@@ -20,6 +20,7 @@ let databaseConnection: SQLiteDBConnection | null = null
 let initializationPromise: Promise<void> | null = null
 let isWebStoreInitialized = false
 let jeepSqliteElementsDefined = false
+let writeLock: Promise<void> = Promise.resolve()
 
 const getSQLiteConnection = (): SQLiteConnection => {
   if (sqliteConnection === null) {
@@ -27,6 +28,31 @@ const getSQLiteConnection = (): SQLiteConnection => {
   }
 
   return sqliteConnection
+}
+
+const withWriteLock = async <T>(operation: () => Promise<T>): Promise<T> => {
+  const previous = writeLock
+  let release: () => void = () => {}
+
+  writeLock = new Promise<void>((resolve) => {
+    release = resolve
+  })
+
+  await previous
+
+  try {
+    return await operation()
+  } finally {
+    release()
+  }
+}
+
+const persistWebStoreIfNeeded = async (): Promise<void> => {
+  if (Capacitor.getPlatform() !== 'web') {
+    return
+  }
+
+  await getSQLiteConnection().saveToStore(DATABASE_NAME)
 }
 
 const defineJeepSqliteCustomElement = async (): Promise<void> => {
@@ -187,13 +213,19 @@ export const queryRows = async <TRow>(
 }
 
 export const runStatement = async (statement: string, values: unknown[] = []): Promise<void> => {
-  const db = await getDatabaseConnection()
-  await db.run(statement, values)
+  await withWriteLock(async () => {
+    const db = await getDatabaseConnection()
+    await db.run(statement, values)
+    await persistWebStoreIfNeeded()
+  })
 }
 
 export const executeStatements = async (statements: string): Promise<void> => {
-  const db = await getDatabaseConnection()
-  await db.execute(statements)
+  await withWriteLock(async () => {
+    const db = await getDatabaseConnection()
+    await db.execute(statements)
+    await persistWebStoreIfNeeded()
+  })
 }
 
 export const closeDatabase = async (): Promise<void> => {

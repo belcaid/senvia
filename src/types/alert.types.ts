@@ -3,7 +3,9 @@ export type AlertType =
   | 'humidity_high'
   | 'temperature_out_of_range'
   | 'light_low'
+  | 'light_high'
   | 'conductivity_low'
+  | 'conductivity_high'
   | 'stale_data'
   | 'sensor_battery_low'
 

@@ -227,6 +227,7 @@ import { useRoute, useRouter } from 'vue-router'
 import MeasurementLineChart from '@/components/MeasurementLineChart.vue'
 import PlantForm, { type PlantFormValues } from '@/components/PlantForm.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
+import { runAlertEngineForPlant } from '@/services/alert-engine.service'
 import { useBleStore } from '@/stores/ble.store'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
@@ -437,6 +438,7 @@ const synchroniserMesures = async (): Promise<void> => {
       limit: historyRange.value === 'all' ? 2400 : 800,
     })
     await Promise.all([plantsStore.chargerPlantes(), sensorsStore.chargerCapteurs()])
+    await runAlertEngineForPlant(currentPlant.id)
   } finally {
     await bleStore.deconnecter(currentSensor.deviceIdentifier, { preserveError: true })
     isSyncing.value = false

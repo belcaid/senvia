@@ -8,7 +8,9 @@ const ALERT_TYPES: AlertType[] = [
   'humidity_high',
   'temperature_out_of_range',
   'light_low',
+  'light_high',
   'conductivity_low',
+  'conductivity_high',
   'stale_data',
   'sensor_battery_low',
 ]
@@ -130,6 +132,15 @@ export class AlertRepository {
     )
 
     return rows.map(mapAlertRow)
+  }
+
+  async getLatestByPlantAndType(plantId: string, type: AlertType): Promise<Alert | null> {
+    const rows = await queryRows<AlertRow>(
+      'SELECT * FROM alerts WHERE plant_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1;',
+      [plantId, type],
+    )
+
+    return rows.length > 0 ? mapAlertRow(rows[0]) : null
   }
 
   async markAsRead(id: string, isRead = true): Promise<Alert | null> {

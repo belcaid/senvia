@@ -52,5 +52,7 @@ export const syncAllPlantStatusesAtStartup = async (): Promise<void> => {
     return
   }
 
-  await Promise.all(updates.map(async (update) => plantRepository.updateStatus(update.plantId, update.status)))
+  for (const update of updates) {
+    await plantRepository.updateStatus(update.plantId, update.status)
+  }
 }

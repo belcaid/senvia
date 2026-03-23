@@ -14,6 +14,7 @@ import {
   readBleMeasurementSnapshot,
   toBleApplicationError,
 } from '@/services/ble-sensor.service'
+import { runAlertEngineForPlant } from '@/services/alert-engine.service'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
@@ -585,6 +586,7 @@ export const useBleStore = defineStore('ble', {
           sensorsStore.chargerCapteurs(),
           measurementsStore.chargerDerniereMesure(plantId),
         ])
+        await runAlertEngineForPlant(plantId)
 
         return {
           sensorId: capteurId,

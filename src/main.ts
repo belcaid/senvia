@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
+import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
 import { ensureDemoData } from '@/services/demo-data.service'
 import { syncAllPlantStatusesAtStartup } from '@/services/plant-status-sync.service'
 import { useThemeStore } from '@/stores/theme.store'
@@ -40,6 +41,7 @@ router.isReady().then(async () => {
     await initializeDatabase()
     await ensureDemoData()
     await syncAllPlantStatusesAtStartup()
+    await runAlertEngineForAllPlants()
   } catch (error) {
     console.warn('[database] initialization failed:', error)
   }
