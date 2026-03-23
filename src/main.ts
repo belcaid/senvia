@@ -1,11 +1,18 @@
 import { createApp } from 'vue'
+import { Capacitor } from '@capacitor/core'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
 import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
 import { ensureDemoData } from '@/services/demo-data.service'
+import {
+  notifyForAlerts,
+  registerNotificationDeepLinks,
+  syncNotificationPreferences,
+} from '@/services/notifications.service'
 import { syncAllPlantStatusesAtStartup } from '@/services/plant-status-sync.service'
+import { getAppSettingsPreference } from '@/services/preferences.service'
 import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
@@ -36,12 +43,18 @@ const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
 router.isReady().then(async () => {
   await themeStore.init()
+  await registerNotificationDeepLinks(router)
 
   try {
     await initializeDatabase()
     await ensureDemoData()
     await syncAllPlantStatusesAtStartup()
-    await runAlertEngineForAllPlants()
+    const settings = await getAppSettingsPreference()
+    await syncNotificationPreferences(settings, {
+      requestPermission: Capacitor.getPlatform() === 'android',
+    })
+    const createdAlerts = await runAlertEngineForAllPlants()
+    await notifyForAlerts(createdAlerts)
   } catch (error) {
     console.warn('[database] initialization failed:', error)
   }

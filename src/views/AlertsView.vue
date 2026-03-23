@@ -121,6 +121,7 @@ import {
 import { useRouter } from 'vue-router'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
 import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
+import { notifyForAlerts } from '@/services/notifications.service'
 import { useAlertsStore } from '@/stores/alerts.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import type { AlertSeverity } from '@/types/alert.types'
@@ -188,7 +189,8 @@ const ouvrirPlante = async (plantId: string): Promise<void> => {
 }
 
 const chargerAlertes = async (): Promise<void> => {
-  await runAlertEngineForAllPlants()
+  const createdAlerts = await runAlertEngineForAllPlants()
+  await notifyForAlerts(createdAlerts)
   await Promise.all([alertsStore.chargerAlertes(), plantsStore.chargerPlantes()])
 }
 

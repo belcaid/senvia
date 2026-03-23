@@ -43,6 +43,20 @@
             @ionBlur="onReminderBlur"
           />
         </ion-item>
+        <ion-item>
+          <ion-select
+            :value="settings.minimumNotifiedSeverity"
+            interface="popover"
+            label="Niveau minimal a notifier"
+            label-placement="stacked"
+            :disabled="!settings.notificationsEnabled"
+            @ionChange="onMinimumSeverityChange"
+          >
+            <ion-select-option value="info">Info</ion-select-option>
+            <ion-select-option value="warning">Warning</ion-select-option>
+            <ion-select-option value="critical">Critique</ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-list>
 
       <ion-list inset>
@@ -116,6 +130,8 @@ import {
   IonListHeader,
   IonNote,
   IonPage,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -125,6 +141,7 @@ import { Capacitor } from '@capacitor/core'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
 import { useSettingsStore } from '@/stores/settings.store'
+import type { AlertSeverity } from '@/types/alert.types'
 import { resetAndSeedDemoData } from '@/services/demo-data.service'
 import { formatDateTime } from '@/utils/date.util'
 
@@ -161,6 +178,19 @@ const onThemeToggle = (event: CustomEvent<{ checked: boolean }>): void => {
 
 const onNotificationsToggle = (event: CustomEvent<{ checked: boolean }>): void => {
   void settingsStore.sauvegarderParametres({ notificationsEnabled: event.detail.checked })
+}
+
+const isAlertSeverity = (value: string): value is AlertSeverity =>
+  value === 'info' || value === 'warning' || value === 'critical'
+
+const onMinimumSeverityChange = (event: CustomEvent<{ value?: string | null }>): void => {
+  const value = String(event.detail.value ?? '')
+
+  if (!isAlertSeverity(value)) {
+    return
+  }
+
+  void settingsStore.sauvegarderParametres({ minimumNotifiedSeverity: value })
 }
 
 const onReminderInput = (event: CustomEvent<{ value?: string | null }>): void => {

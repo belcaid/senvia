@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { updateAppSettingsPreference, DEFAULT_APP_SETTINGS, getAppSettingsPreference } from '@/services/preferences.service'
+import { syncNotificationPreferences } from '@/services/notifications.service'
 import { toErrorMessage } from '@/stores/store.utils'
 import { useThemeStore } from '@/stores/theme.store'
 import type { AppSettings } from '@/types/app-settings.types'
@@ -37,6 +38,7 @@ export const useSettingsStore = defineStore('settings', {
         const parametres = await getAppSettingsPreference()
         this.parametres = parametres
         applyThemeToDom(parametres.themeMode)
+        await syncNotificationPreferences(parametres, { requestPermission: false })
 
         const themeStore = useThemeStore()
         themeStore.$patch({
@@ -54,7 +56,17 @@ export const useSettingsStore = defineStore('settings', {
       this.erreur = null
 
       try {
-        const parametres = await updateAppSettingsPreference(patch)
+        let parametres = await updateAppSettingsPreference(patch)
+        const isNotificationSyncOk = await syncNotificationPreferences(parametres, {
+          requestPermission: patch.notificationsEnabled === true,
+        })
+
+        if (patch.notificationsEnabled === true && !isNotificationSyncOk) {
+          parametres = await updateAppSettingsPreference({ notificationsEnabled: false })
+          this.erreur =
+            "Permission notifications refusee. Active-la dans les reglages Android puis reactive l'option."
+        }
+
         this.parametres = parametres
         applyThemeToDom(parametres.themeMode)
 
