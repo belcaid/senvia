@@ -1,2 +1,137 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Core palette - inspired by maquette4.webp */
+  --ion-color-primary: #37d55c;
+  --ion-color-primary-rgb: 55, 213, 92;
+  --ion-color-primary-contrast: #07200f;
+  --ion-color-primary-contrast-rgb: 7, 32, 15;
+  --ion-color-primary-shade: #30bb51;
+  --ion-color-primary-tint: #4bdb6c;
+
+  --ion-color-secondary: #1a8c46;
+  --ion-color-secondary-rgb: 26, 140, 70;
+  --ion-color-secondary-contrast: #f4fff7;
+  --ion-color-secondary-contrast-rgb: 244, 255, 247;
+  --ion-color-secondary-shade: #177b3e;
+  --ion-color-secondary-tint: #319858;
+
+  --ion-color-tertiary: #6ebd83;
+  --ion-color-tertiary-rgb: 110, 189, 131;
+  --ion-color-tertiary-contrast: #102215;
+  --ion-color-tertiary-contrast-rgb: 16, 34, 21;
+  --ion-color-tertiary-shade: #61a673;
+  --ion-color-tertiary-tint: #7dc495;
+
+  --ion-color-success: #2fb35b;
+  --ion-color-warning: #d9a729;
+  --ion-color-danger: #d24a4a;
+
+  --ion-background-color: #eef6ef;
+  --ion-background-color-rgb: 238, 246, 239;
+  --ion-text-color: #122218;
+  --ion-text-color-rgb: 18, 34, 24;
+  --ion-border-color: rgba(29, 54, 38, 0.12);
+
+  /* App tokens */
+  --senvia-bg-gradient: radial-gradient(circle at 8% 10%, rgba(68, 210, 108, 0.24), transparent 36%),
+    radial-gradient(circle at 92% 90%, rgba(29, 140, 70, 0.16), transparent 38%),
+    linear-gradient(180deg, #f4faf5 0%, #e8f3ea 100%);
+  --senvia-surface: rgba(255, 255, 255, 0.88);
+  --senvia-surface-2: rgba(245, 251, 246, 0.92);
+  --senvia-text-muted: #3f5d49;
+  --senvia-card-border: rgba(23, 58, 38, 0.14);
+  --senvia-shadow-color: rgba(18, 42, 29, 0.08);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ion-color-primary: #4cec71;
+  --ion-color-primary-rgb: 76, 236, 113;
+  --ion-color-primary-contrast: #07190d;
+  --ion-color-primary-contrast-rgb: 7, 25, 13;
+  --ion-color-primary-shade: #43d063;
+  --ion-color-primary-tint: #5ef07f;
+
+  --ion-color-secondary: #28a85a;
+  --ion-color-secondary-rgb: 40, 168, 90;
+  --ion-color-secondary-contrast: #08170f;
+  --ion-color-secondary-contrast-rgb: 8, 23, 15;
+  --ion-color-secondary-shade: #23944f;
+  --ion-color-secondary-tint: #3eb26b;
+
+  --ion-color-tertiary: #74cc8e;
+  --ion-color-tertiary-rgb: 116, 204, 142;
+  --ion-color-tertiary-contrast: #0b170f;
+  --ion-color-tertiary-contrast-rgb: 11, 23, 15;
+  --ion-color-tertiary-shade: #66b37d;
+  --ion-color-tertiary-tint: #82d198;
+
+  --ion-color-success: #43db75;
+  --ion-color-warning: #f0bd47;
+  --ion-color-danger: #ff6b6b;
+
+  --ion-background-color: #0d1710;
+  --ion-background-color-rgb: 13, 23, 16;
+  --ion-text-color: #e8f6eb;
+  --ion-text-color-rgb: 232, 246, 235;
+  --ion-border-color: rgba(125, 204, 145, 0.18);
+
+  --senvia-bg-gradient: radial-gradient(circle at 8% 14%, rgba(61, 222, 106, 0.26), transparent 38%),
+    radial-gradient(circle at 88% 86%, rgba(10, 70, 35, 0.45), transparent 44%),
+    linear-gradient(180deg, #09120c 0%, #132118 100%);
+  --senvia-surface: rgba(22, 35, 27, 0.82);
+  --senvia-surface-2: rgba(20, 32, 25, 0.9);
+  --senvia-text-muted: #b2d4bd;
+  --senvia-card-border: rgba(114, 205, 142, 0.2);
+  --senvia-shadow-color: rgba(2, 10, 6, 0.45);
+}
+
+html,
+body,
+ion-app {
+  background: var(--senvia-bg-gradient);
+  color: var(--ion-text-color);
+}
+
+ion-content {
+  --background: var(--senvia-bg-gradient);
+  --color: var(--ion-text-color);
+}
+
+ion-header ion-toolbar {
+  --background: transparent;
+  --border-color: transparent;
+  --color: var(--ion-text-color);
+  backdrop-filter: blur(12px);
+}
+
+ion-card {
+  --background: var(--senvia-surface);
+  border: 1px solid var(--senvia-card-border);
+  box-shadow: 0 14px 35px var(--senvia-shadow-color);
+}
+
+ion-list {
+  background: transparent;
+}
+
+ion-item {
+  --background: var(--senvia-surface);
+  --border-color: var(--senvia-card-border);
+  --color: var(--ion-text-color);
+}
+
+ion-tab-bar {
+  --background: var(--senvia-surface-2);
+  --color: var(--senvia-text-muted);
+  --color-selected: var(--ion-color-primary);
+  border-top: 1px solid var(--senvia-card-border);
+  backdrop-filter: blur(10px);
+}
+
+ion-button {
+  --border-radius: 999px;
+}

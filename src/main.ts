@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
 
@@ -21,24 +22,15 @@ import '@ionic/vue/css/text-transformation.css'
 import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* @import '@ionic/vue/css/palettes/dark.always.css'; */
-/* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css'
-
 /* Theme variables */
 import './theme/variables.css'
 
 const pinia = createPinia()
+const themeStore = useThemeStore(pinia)
 
 const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
-router.isReady().then(() => {
+router.isReady().then(async () => {
+  await themeStore.init()
   app.mount('#app')
 })

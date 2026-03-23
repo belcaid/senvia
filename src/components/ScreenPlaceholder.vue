@@ -28,7 +28,9 @@ defineProps<Props>()
 
 <style scoped>
 .placeholder-card {
-  border: 1px solid var(--ion-color-step-150, #d8d8d8);
+  --background: var(--senvia-surface);
+  border: 1px solid var(--senvia-card-border);
+  box-shadow: 0 14px 35px var(--senvia-shadow-color);
 }
 
 .actions {
@@ -41,5 +43,6 @@ defineProps<Props>()
 p {
   margin: 0;
   line-height: 1.5;
+  color: var(--senvia-text-muted);
 }
 </style>
