@@ -1,5 +1,6 @@
 export * from './alert.types'
 export * from './app-settings.types'
+export * from './ble.types'
 export * from './measurement.types'
 export * from './plant.types'
 export * from './sensor-device.types'
