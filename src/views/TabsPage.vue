@@ -5,7 +5,7 @@
 
       <ion-tab-bar slot="bottom">
         <ion-tab-button tab="dashboard" href="/tabs/dashboard">
-          <ion-icon aria-hidden="true" :icon="leafOutline" />
+          <ion-icon aria-hidden="true" :icon="gridOutline" />
           <ion-label>Dashboard</ion-label>
         </ion-tab-button>
 
@@ -38,5 +38,5 @@ import {
   IonTabButton,
   IonTabs,
 } from '@ionic/vue'
-import { heartOutline, leafOutline, notificationsOutline, settingsOutline } from 'ionicons/icons'
+import { gridOutline, heartOutline, notificationsOutline, settingsOutline } from 'ionicons/icons'
 </script>

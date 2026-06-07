@@ -1,6 +1,6 @@
 <template>
   <form class="plant-form" @submit.prevent="soumettre">
-    <ion-list inset>
+    <ion-list inset class="senvia-form-list">
       <ion-item>
         <ion-input
           v-model="form.nom"
@@ -118,6 +118,7 @@ import {
   IonToggle,
 } from '@ionic/vue'
 import { DEFAULT_PLANT_CATEGORY, DEFAULT_PLANT_ICON, PLANT_CATEGORY_OPTIONS, PLANT_ICON_OPTIONS } from '@/utils/plant-options.util'
+import { hapticLight, hapticWarning } from '@/services/ux-feedback.service'
 import type { PlantCategory } from '@/types/plant.types'
 import type { ThresholdProfile } from '@/types/threshold-profile.types'
 
@@ -264,10 +265,12 @@ const validerFormulaire = (): boolean => {
 const selectionnerIcone = (iconValue: string): void => {
   form.icone = iconValue
   validerChamp('icone')
+  void hapticLight()
 }
 
 const soumettre = (): void => {
   if (!validerFormulaire()) {
+    void hapticWarning()
     return
   }
 
@@ -306,7 +309,7 @@ const showCancel = computed(() => props.showCancel)
 
 .icon-picker p {
   margin: 0.25rem 0 0.5rem;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
   font-size: 0.9rem;
 }
 

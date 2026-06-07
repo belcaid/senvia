@@ -1,0 +1,200 @@
+:root {
+  --senvia-space-xs: 0.35rem;
+  --senvia-space-sm: 0.6rem;
+  --senvia-space-md: 0.9rem;
+  --senvia-space-lg: 1.2rem;
+}
+
+:root[data-theme='light'] {
+  --ion-color-medium: #5d7567;
+  --ion-color-medium-rgb: 93, 117, 103;
+  --ion-color-medium-contrast: #f4f8f5;
+  --ion-color-medium-contrast-rgb: 244, 248, 245;
+  --ion-color-medium-shade: #516658;
+  --ion-color-medium-tint: #6e8477;
+
+  --ion-color-success-rgb: 47, 179, 91;
+  --ion-color-warning-rgb: 217, 167, 41;
+  --ion-color-danger-rgb: 210, 74, 74;
+
+  --senvia-text-muted: #415f4b;
+}
+
+:root[data-theme='dark'] {
+  --ion-color-medium: #d9ebe1;
+  --ion-color-medium-rgb: 217, 235, 225;
+  --ion-color-medium-contrast: #0f1c14;
+  --ion-color-medium-contrast-rgb: 15, 28, 20;
+  --ion-color-medium-shade: #e3f2ea;
+  --ion-color-medium-tint: #f0faf4;
+
+  --ion-color-success-rgb: 67, 219, 117;
+  --ion-color-warning-rgb: 240, 189, 71;
+  --ion-color-danger-rgb: 255, 107, 107;
+
+  --senvia-text-muted: #e0f2e7;
+}
+
+ion-card-subtitle,
+ion-note[color='medium'] {
+  color: var(--senvia-text-muted);
+  opacity: 1;
+}
+
+ion-note:not([color]) {
+  color: var(--senvia-text-muted);
+  opacity: 1;
+}
+
+.ion-page > ion-content {
+  --padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+}
+
+ion-modal ion-content {
+  --padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.2rem);
+}
+
+.ion-page > ion-content.ion-padding {
+  --padding-top: 0.95rem;
+  --padding-start: 0.95rem;
+  --padding-end: 0.95rem;
+}
+
+:root[data-theme='light'] ion-searchbar {
+  --color: var(--ion-text-color);
+  --placeholder-color: #4b6654;
+  --placeholder-opacity: 0.9;
+}
+
+:root[data-theme='dark'] ion-searchbar {
+  --color: var(--ion-text-color);
+  --placeholder-color: #def3e6;
+  --placeholder-opacity: 0.95;
+}
+
+:root[data-theme='dark'] ion-list-header,
+:root[data-theme='dark'] ion-list-header ion-label {
+  color: var(--ion-text-color);
+}
+
+:root[data-theme='dark'] ion-item ion-label h3,
+:root[data-theme='dark'] ion-item ion-label p,
+:root[data-theme='dark'] ion-item ion-note[slot='end'],
+:root[data-theme='dark'] ion-card-subtitle,
+:root[data-theme='dark'] .senvia-muted {
+  color: var(--ion-text-color);
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .metric-label,
+:root[data-theme='dark'] .chart-card__header p,
+:root[data-theme='dark'] .chart-card__footer,
+:root[data-theme='dark'] .detail-text,
+:root[data-theme='dark'] .detail-score,
+:root[data-theme='dark'] .measurements-empty,
+:root[data-theme='dark'] .plant-card__updated,
+:root[data-theme='dark'] .dashboard-empty-filter,
+:root[data-theme='dark'] .plant-summary__content p {
+  color: #e4f6eb;
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .detail-card ion-card-title,
+:root[data-theme='dark'] .detail-card ion-card-subtitle,
+:root[data-theme='dark'] .detail-card strong,
+:root[data-theme='dark'] .metrics-grid p,
+:root[data-theme='dark'] .sensor-grid p {
+  color: var(--ion-text-color);
+  opacity: 1;
+}
+
+.senvia-feedback {
+  display: block;
+  margin: 0.35rem 0.2rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--ion-color-danger-rgb), 0.32);
+  background: rgba(var(--ion-color-danger-rgb), 0.11);
+  --color: var(--ion-color-danger);
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.senvia-results-count {
+  display: block;
+  margin: 0.55rem 0.2rem;
+  color: var(--senvia-text-muted);
+}
+
+.senvia-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--senvia-space-sm);
+  padding: 2rem 0;
+  color: var(--senvia-text-muted);
+  font-size: 0.92rem;
+}
+
+.senvia-loading-container ion-spinner {
+  transform: scale(1.05);
+}
+
+.senvia-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--senvia-space-sm);
+}
+
+.senvia-filters-grid ion-item {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.senvia-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: var(--senvia-space-md);
+  align-items: start;
+}
+
+.senvia-card {
+  border-radius: 18px;
+}
+
+.senvia-form-list {
+  background: transparent;
+}
+
+.senvia-form-list ion-item {
+  --background: var(--senvia-surface-2);
+  border: 1px solid var(--senvia-card-border);
+  border-radius: 14px;
+  margin-bottom: 0.2rem;
+}
+
+.senvia-muted {
+  color: var(--senvia-text-muted);
+}
+
+@media (max-width: 680px) {
+  .senvia-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .ion-page > ion-content.ion-padding {
+    --padding-top: 1.4rem;
+    --padding-start: 1.6rem;
+    --padding-end: 1.6rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .ion-page > ion-content.ion-padding {
+    --padding-top: 1.65rem;
+    --padding-start: 2.05rem;
+    --padding-end: 2.05rem;
+  }
+}

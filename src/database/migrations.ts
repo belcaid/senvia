@@ -4,6 +4,7 @@ import {
   CREATE_MEASUREMENTS_TABLE_SQL,
   CREATE_PLANTS_TABLE_SQL,
   CREATE_SENSOR_DEVICES_TABLE_SQL,
+  CREATE_SENSOR_RELATION_TRIGGERS_SQL,
   CREATE_THRESHOLD_PROFILES_TABLE_SQL,
 } from '@/database/schema'
 
@@ -25,5 +26,10 @@ export const DATABASE_MIGRATIONS: DatabaseMigration[] = [
       CREATE_ALERTS_TABLE_SQL,
       CREATE_INDEXES_SQL,
     ],
+  },
+  {
+    version: 2,
+    name: 'enforce_sensor_plant_relation',
+    statements: [CREATE_SENSOR_RELATION_TRIGGERS_SQL],
   },
 ]

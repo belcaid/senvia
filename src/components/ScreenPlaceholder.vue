@@ -1,5 +1,5 @@
 <template>
-  <ion-card class="placeholder-card">
+  <ion-card class="placeholder-card senvia-card">
     <ion-card-header>
       <ion-card-title>{{ title }}</ion-card-title>
       <ion-card-subtitle v-if="subtitle">{{ subtitle }}</ion-card-subtitle>

@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="favorites-page">
     <ion-header>
       <ion-toolbar>
         <ion-title>Favoris</ion-title>
@@ -7,24 +7,25 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
-      <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
+      <ion-note v-if="measurementsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ measurementsStore.erreur }}
       </ion-note>
-      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">{{ settingsStore.erreur }}</ion-note>
-      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ settingsStore.erreur }}</ion-note>
+      <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
       </ion-note>
 
-      <ion-note class="results-count" color="medium">
+      <ion-note class="senvia-results-count senvia-reveal" color="medium">
         {{ favoris.length }} favori{{ favoris.length > 1 ? 's' : '' }}
       </ion-note>
 
-      <div v-if="plantsStore.estChargement" class="loading-container">
+      <div v-if="plantsStore.estChargement" class="senvia-loading-container senvia-reveal">
         <ion-spinner name="crescent" />
+        <span>Chargement des favoris...</span>
       </div>
 
-      <div v-else-if="favoris.length > 0" class="cards-grid">
+      <div v-else-if="favoris.length > 0" class="senvia-cards-grid">
         <plant-card
           v-for="plante in favoris"
           :key="plante.id"
@@ -37,6 +38,7 @@
       </div>
 
       <screen-placeholder
+        class="senvia-reveal"
         v-else
         title="Aucun favori"
         subtitle="Marque des plantes en favori depuis le dashboard"
@@ -66,6 +68,8 @@ import {
 import { useRouter } from 'vue-router'
 import PlantCard from '@/components/PlantCard.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
+import { showErrorFeedback, showInfoFeedback } from '@/services/ux-feedback.service'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -116,7 +120,14 @@ const retirerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Pro
     return
   }
 
-  await plantsStore.marquerFavori(plantId, false)
+  const updated = await plantsStore.marquerFavori(plantId, false)
+
+  if (updated === null) {
+    await showErrorFeedback("Impossible de retirer ce favori.")
+    return
+  }
+
+  await showInfoFeedback('Retiree des favoris.')
 }
 
 const ouvrirPlante = async (plantId: string): Promise<void> => {
@@ -126,29 +137,9 @@ const ouvrirPlante = async (plantId: string): Promise<void> => {
 onIonViewWillEnter(() => {
   void chargerFavoris()
 })
+
+useGsapReveal({
+  rootSelector: '.favorites-page',
+  itemSelector: '.senvia-reveal',
+})
 </script>
-
-<style scoped>
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 0.9rem;
-  align-items: start;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
-}
-
-.feedback {
-  display: block;
-  margin: 0.3rem 0.2rem;
-}
-
-.results-count {
-  display: block;
-  margin: 0.55rem 0.2rem;
-}
-</style>

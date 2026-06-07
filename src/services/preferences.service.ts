@@ -65,6 +65,10 @@ const toNumber = (value: unknown, fallback: number): number => {
   return fallback
 }
 
+const clampInteger = (value: unknown, fallback: number, min: number, max: number): number => {
+  return Math.min(max, Math.max(min, Math.round(toNumber(value, fallback))))
+}
+
 const parseGeneralSettingsOptions = (value: string | null): GeneralSettingsOptions => {
   if (value === null) {
     return DEFAULT_GENERAL_SETTINGS_OPTIONS
@@ -79,13 +83,17 @@ const parseGeneralSettingsOptions = (value: string | null): GeneralSettingsOptio
         typeof preferredHistoryRange === 'string' && isHistoryRange(preferredHistoryRange)
           ? preferredHistoryRange
         : DEFAULT_GENERAL_SETTINGS_OPTIONS.preferredHistoryRange,
-      staleDataThresholdMinutes: toNumber(
+      staleDataThresholdMinutes: clampInteger(
         parsed.staleDataThresholdMinutes,
         DEFAULT_GENERAL_SETTINGS_OPTIONS.staleDataThresholdMinutes,
+        5,
+        1440,
       ),
-      batteryReadIntervalHours: toNumber(
+      batteryReadIntervalHours: clampInteger(
         parsed.batteryReadIntervalHours,
         DEFAULT_GENERAL_SETTINGS_OPTIONS.batteryReadIntervalHours,
+        1,
+        168,
       ),
       autoSyncOnForeground:
         typeof parsed.autoSyncOnForeground === 'boolean'
@@ -168,6 +176,18 @@ export const updateGeneralOptionsPreference = async (
   const merged: GeneralSettingsOptions = {
     ...current,
     ...patch,
+    staleDataThresholdMinutes: clampInteger(
+      patch.staleDataThresholdMinutes ?? current.staleDataThresholdMinutes,
+      DEFAULT_GENERAL_SETTINGS_OPTIONS.staleDataThresholdMinutes,
+      5,
+      1440,
+    ),
+    batteryReadIntervalHours: clampInteger(
+      patch.batteryReadIntervalHours ?? current.batteryReadIntervalHours,
+      DEFAULT_GENERAL_SETTINGS_OPTIONS.batteryReadIntervalHours,
+      1,
+      168,
+    ),
   }
 
   await Preferences.set({

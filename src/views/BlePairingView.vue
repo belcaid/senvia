@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ble-pairing-page">
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
@@ -10,12 +10,12 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
-      <ion-note v-if="sensorsStore.erreur" class="feedback" color="danger">{{ sensorsStore.erreur }}</ion-note>
-      <ion-note v-if="bleStore.erreur" class="feedback" color="danger">{{ bleStore.erreur }}</ion-note>
+      <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
+      <ion-note v-if="sensorsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ sensorsStore.erreur }}</ion-note>
+      <ion-note v-if="bleStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ bleStore.erreur }}</ion-note>
 
       <template v-if="plante">
-        <ion-card>
+        <ion-card class="senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>{{ plante.name }}</ion-card-title>
             <ion-card-subtitle>Association capteur BLE</ion-card-subtitle>
@@ -32,7 +32,7 @@
           </ion-card-content>
         </ion-card>
 
-        <div class="actions-row">
+        <div class="actions-row senvia-reveal">
           <ion-button size="small" fill="outline" @click="rafraichirEtat">Rafraichir etat</ion-button>
           <ion-button v-if="isAndroid && !bleStore.bluetoothActif" size="small" @click="activerBluetooth">
             Activer Bluetooth
@@ -42,7 +42,7 @@
           </ion-button>
         </div>
 
-        <ion-list inset>
+        <ion-list inset class="senvia-reveal">
           <ion-list-header>
             <ion-label>Capteurs detectes ({{ capteursTries.length }})</ion-label>
           </ion-list-header>
@@ -67,7 +67,7 @@
           </ion-item>
         </ion-list>
 
-        <div class="actions-col">
+        <div class="actions-col senvia-reveal">
           <ion-button
             :disabled="selection.deviceId === '' || isBusy"
             expand="block"
@@ -93,7 +93,7 @@
           </ion-button>
         </div>
 
-        <ion-card v-if="bleStore.dernieresMesuresTest" class="measure-card">
+        <ion-card v-if="bleStore.dernieresMesuresTest" class="measure-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Lecture capteur</ion-card-title>
             <ion-card-subtitle>{{ formatDateTime(bleStore.dernieresMesuresTest.measuredAt) }}</ion-card-subtitle>
@@ -111,7 +111,7 @@
         </ion-card>
       </template>
 
-      <ion-card v-else>
+      <ion-card v-else class="senvia-card senvia-reveal">
         <ion-card-header>
           <ion-card-title>Plante introuvable</ion-card-title>
         </ion-card-header>
@@ -151,6 +151,8 @@ import {
 } from '@ionic/vue'
 import { Capacitor } from '@capacitor/core'
 import { useRoute, useRouter } from 'vue-router'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
+import { showErrorFeedback, showInfoFeedback, showSuccessFeedback, showWarningFeedback } from '@/services/ux-feedback.service'
 import { useBleStore } from '@/stores/ble.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
@@ -250,13 +252,21 @@ const basculerScan = async (): Promise<void> => {
 
 const testerConnexion = async (): Promise<void> => {
   if (selection.deviceId.trim() === '') {
+    await showWarningFeedback('Selectionne un capteur avant le test.')
     return
   }
 
   isBusy.value = true
 
   try {
-    await bleStore.testerConnexionEtLireMesures(selection.deviceId, { forceBatteryRead: true })
+    const snapshot = await bleStore.testerConnexionEtLireMesures(selection.deviceId, { forceBatteryRead: true })
+
+    if (snapshot === null) {
+      await showWarningFeedback('Lecture des donnees capteur invalide.')
+      return
+    }
+
+    await showSuccessFeedback('Connexion capteur validee.')
   } finally {
     isBusy.value = false
   }
@@ -273,8 +283,12 @@ const associerCapteur = async (): Promise<void> => {
     const result = await bleStore.associerCapteurAPlante(plante.value.id, selection.deviceId)
 
     if (result !== null) {
+      await showSuccessFeedback('Capteur associe a la plante.')
       await router.replace(`/plants/${plante.value.id}`)
+      return
     }
+
+    await showErrorFeedback("Impossible d'associer ce capteur.")
   } finally {
     isBusy.value = false
   }
@@ -282,6 +296,7 @@ const associerCapteur = async (): Promise<void> => {
 
 const deconnecter = async (): Promise<void> => {
   await bleStore.deconnecter()
+  await showInfoFeedback('Capteur deconnecte.')
 }
 
 onIonViewWillEnter(() => {
@@ -292,14 +307,14 @@ onIonViewWillLeave(() => {
   void bleStore.arreterScan()
   void bleStore.deconnecter()
 })
+
+useGsapReveal({
+  rootSelector: '.ble-pairing-page',
+  itemSelector: '.senvia-reveal',
+})
 </script>
 
 <style scoped>
-.feedback {
-  display: block;
-  margin: 0.2rem 0.2rem 0.5rem;
-}
-
 .actions-row {
   display: flex;
   flex-wrap: wrap;
@@ -314,7 +329,22 @@ onIonViewWillLeave(() => {
   margin: 0.75rem 0;
 }
 
+.measure-card,
+:deep(ion-card) {
+  border-radius: 18px;
+}
+
+:deep(ion-card ion-chip) {
+  border: 1px solid var(--senvia-card-border);
+  font-weight: 600;
+}
+
+:deep(ion-card ion-card-content p) {
+  color: var(--ion-text-color);
+}
+
 .measure-card p {
   margin: 0.35rem 0;
+  color: var(--ion-text-color);
 }
 </style>

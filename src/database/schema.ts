@@ -1,6 +1,6 @@
 export const DATABASE_NAME = 'senvia'
 export const DATABASE_ENCRYPTION_MODE = 'no-encryption'
-export const DATABASE_VERSION = 1
+export const DATABASE_VERSION = 2
 export const MIGRATIONS_TABLE = 'schema_migrations'
 
 export const PRAGMA_FOREIGN_KEYS = 'PRAGMA foreign_keys = ON;'
@@ -101,4 +101,26 @@ CREATE INDEX IF NOT EXISTS idx_sensor_devices_plant_id ON sensor_devices(plant_i
 CREATE INDEX IF NOT EXISTS idx_measurements_plant_id_measured_at ON measurements(plant_id, measured_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_plant_id_created_at ON alerts(plant_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_is_read ON alerts(is_read);
+`
+
+export const CREATE_SENSOR_RELATION_TRIGGERS_SQL = `
+CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_insert
+AFTER INSERT ON sensor_devices
+WHEN NEW.plant_id IS NOT NULL
+BEGIN
+  UPDATE plants SET sensor_id = NEW.id WHERE id = NEW.plant_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_update
+AFTER UPDATE OF plant_id ON sensor_devices
+BEGIN
+  UPDATE plants SET sensor_id = NULL WHERE sensor_id = NEW.id AND id IS NOT NEW.plant_id;
+  UPDATE plants SET sensor_id = NEW.id WHERE id = NEW.plant_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_delete
+AFTER DELETE ON sensor_devices
+BEGIN
+  UPDATE plants SET sensor_id = NULL WHERE sensor_id = OLD.id;
+END;
 `

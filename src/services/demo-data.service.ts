@@ -202,6 +202,10 @@ const seedDemoData = async (): Promise<void> => {
 }
 
 export const ensureDemoData = async (): Promise<boolean> => {
+  if (!import.meta.env.DEV) {
+    return false
+  }
+
   if (await isDemoDataAlreadySeeded()) {
     return false
   }

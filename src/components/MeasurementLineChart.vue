@@ -218,7 +218,7 @@ const maxLabel = computed(() => formatValue(maxValue.value))
 
 .chart-card__header p {
   font-size: 0.78rem;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
 }
 
 .chart-shell {
@@ -257,7 +257,7 @@ const maxLabel = computed(() => formatValue(maxValue.value))
 .empty-state {
   margin: 0.65rem 0 0;
   font-size: 0.82rem;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
 }
 
 .chart-card__footer {
@@ -266,7 +266,7 @@ const maxLabel = computed(() => formatValue(maxValue.value))
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.45rem;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
   font-size: 0.75rem;
 }
 </style>

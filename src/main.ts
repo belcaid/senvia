@@ -6,6 +6,7 @@ import router from './router'
 import { initializeDatabase } from '@/database'
 import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
 import { ensureDemoData } from '@/services/demo-data.service'
+import { registerForegroundSync } from '@/services/foreground-sync.service'
 import {
   notifyForAlerts,
   registerNotificationDeepLinks,
@@ -35,6 +36,7 @@ import '@ionic/vue/css/display.css'
 
 /* Theme variables */
 import './theme/variables.css'
+import './theme/polish.css'
 
 const pinia = createPinia()
 const themeStore = useThemeStore(pinia)
@@ -48,6 +50,7 @@ router.isReady().then(async () => {
   try {
     await initializeDatabase()
     await ensureDemoData()
+    await registerForegroundSync(pinia)
     await syncAllPlantStatusesAtStartup()
     const settings = await getAppSettingsPreference()
     await syncNotificationPreferences(settings, {

@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { LocalNotifications, type ActionPerformed } from '@capacitor/local-notifications'
 import { Preferences } from '@capacitor/preferences'
 import { getAppSettingsPreference } from '@/services/preferences.service'
-import type { Alert, AlertSeverity, AlertType } from '@/types/alert.types'
+import type { Alert, AlertSeverity } from '@/types/alert.types'
 import type { AppSettings } from '@/types/app-settings.types'
 import type { Router } from 'vue-router'
 
@@ -29,9 +29,6 @@ const toSeverityRank = (severity: AlertSeverity): number => {
 
 const shouldNotifyByMinimumSeverity = (alertSeverity: AlertSeverity, minimumSeverity: AlertSeverity): boolean =>
   toSeverityRank(alertSeverity) >= toSeverityRank(minimumSeverity)
-
-const shouldNotifyForType = (type: AlertType, severity: AlertSeverity): boolean =>
-  severity === 'critical' || type === 'sensor_battery_low' || type === 'stale_data'
 
 const buildNotificationIdFromAlertId = (alertId: string): number => {
   let hash = 0
@@ -303,10 +300,6 @@ export const notifyForAlerts = async (alerts: Alert[]): Promise<void> => {
 
     for (const alert of alerts) {
       if (alreadyNotifiedIds.has(alert.id)) {
-        continue
-      }
-
-      if (!shouldNotifyForType(alert.type, alert.severity)) {
         continue
       }
 

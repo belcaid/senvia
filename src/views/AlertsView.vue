@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="alerts-page">
     <ion-header>
       <ion-toolbar>
         <ion-title>Alertes</ion-title>
@@ -7,7 +7,7 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div class="filters-grid">
+      <div class="senvia-filters-grid senvia-reveal">
         <ion-item>
           <ion-select
             v-model="etatSelectionne"
@@ -36,17 +36,18 @@
         </ion-item>
       </div>
 
-      <ion-note class="results-count" color="medium">
+      <ion-note class="senvia-results-count senvia-reveal" color="medium">
         {{ alertesFiltrees.length }} alerte{{ alertesFiltrees.length > 1 ? 's' : '' }}
       </ion-note>
 
-      <ion-note v-if="alertsStore.erreur" class="feedback" color="danger">{{ alertsStore.erreur }}</ion-note>
+      <ion-note v-if="alertsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ alertsStore.erreur }}</ion-note>
 
-      <div v-if="alertsStore.estChargement" class="loading-container">
+      <div v-if="alertsStore.estChargement" class="senvia-loading-container senvia-reveal">
         <ion-spinner name="crescent" />
+        <span>Chargement des alertes...</span>
       </div>
 
-      <ion-list v-else-if="alertesFiltrees.length > 0" inset>
+      <ion-list v-else-if="alertesFiltrees.length > 0" inset class="senvia-reveal">
         <ion-item
           v-for="alerte in alertesFiltrees"
           :key="alerte.id"
@@ -86,6 +87,7 @@
       </ion-list>
 
       <screen-placeholder
+        class="senvia-reveal"
         v-else
         title="Aucune alerte"
         subtitle="Pas d'alertes pour les filtres en cours"
@@ -120,8 +122,10 @@ import {
 } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
 import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
 import { notifyForAlerts } from '@/services/notifications.service'
+import { showErrorFeedback, showInfoFeedback } from '@/services/ux-feedback.service'
 import { useAlertsStore } from '@/stores/alerts.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import type { AlertSeverity } from '@/types/alert.types'
@@ -181,7 +185,14 @@ const getPlantName = (plantId: string): string => {
 }
 
 const marquerEtat = async (alertId: string, isRead: boolean): Promise<void> => {
-  await alertsStore.marquerAlerteLue(alertId, isRead)
+  const updated = await alertsStore.marquerAlerteLue(alertId, isRead)
+
+  if (updated === null) {
+    await showErrorFeedback("Impossible de modifier l'etat de l'alerte.")
+    return
+  }
+
+  await showInfoFeedback(updated.isRead ? 'Alerte marquee comme lue.' : 'Alerte marquee non lue.')
 }
 
 const ouvrirPlante = async (plantId: string): Promise<void> => {
@@ -197,31 +208,14 @@ const chargerAlertes = async (): Promise<void> => {
 onIonViewWillEnter(() => {
   void chargerAlertes()
 })
+
+useGsapReveal({
+  rootSelector: '.alerts-page',
+  itemSelector: '.senvia-reveal',
+})
 </script>
 
 <style scoped>
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-}
-
-.results-count {
-  display: block;
-  margin: 0.55rem 0.2rem;
-}
-
-.feedback {
-  display: block;
-  margin: 0.3rem 0.2rem;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
-}
-
 .alert-title-row {
   display: flex;
   gap: 0.4rem;
@@ -231,6 +225,16 @@ onIonViewWillEnter(() => {
 
 .alert-title-row h2 {
   margin: 0;
+}
+
+:deep(.alert-title-row ion-chip) {
+  border: 1px solid var(--senvia-card-border);
+  font-weight: 600;
+}
+
+.alert-title-row p,
+:deep(ion-item ion-label p) {
+  color: var(--senvia-text-muted);
 }
 
 .alert-actions {
@@ -257,7 +261,7 @@ onIonViewWillEnter(() => {
 }
 
 @media (max-width: 680px) {
-  .filters-grid {
+  .senvia-filters-grid {
     grid-template-columns: 1fr;
   }
 }

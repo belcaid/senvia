@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="plant-create-page">
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
@@ -10,12 +10,13 @@
     </ion-header>
 
     <ion-content>
-      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
       </ion-note>
-      <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
+      <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
 
       <plant-form
+        class="senvia-reveal"
         :threshold-profiles="thresholdProfilesStore.profils"
         :is-submitting="isSubmitting"
         submit-label="Ajouter la plante"
@@ -39,6 +40,8 @@ import {
 } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import PlantForm, { type PlantFormValues } from '@/components/PlantForm.vue'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
+import { showErrorFeedback, showSuccessFeedback } from '@/services/ux-feedback.service'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useThresholdProfilesStore } from '@/stores/threshold-profiles.store'
 
@@ -66,8 +69,12 @@ const creerPlante = async (values: PlantFormValues): Promise<void> => {
     })
 
     if (plante !== null) {
+      await showSuccessFeedback('Plante ajoutee avec succes.')
       await router.replace(`/plants/${plante.id}`)
+      return
     }
+
+    await showErrorFeedback("Impossible d'ajouter la plante.")
   } finally {
     isSubmitting.value = false
   }
@@ -76,11 +83,10 @@ const creerPlante = async (values: PlantFormValues): Promise<void> => {
 onMounted(() => {
   void thresholdProfilesStore.chargerProfils({ ensureDefaults: true })
 })
-</script>
 
-<style scoped>
-.feedback {
-  display: block;
-  margin: 0.75rem 1rem 0;
-}
-</style>
+useGsapReveal({
+  rootSelector: '.plant-create-page',
+  itemSelector: '.senvia-reveal',
+  once: true,
+})
+</script>

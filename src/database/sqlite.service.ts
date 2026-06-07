@@ -3,6 +3,7 @@ import {
   CapacitorSQLite,
   SQLiteConnection,
   type SQLiteDBConnection,
+  type capSQLiteChanges,
   type capSQLiteValues,
 } from '@capacitor-community/sqlite'
 import { DATABASE_MIGRATIONS } from '@/database/migrations'
@@ -225,6 +226,40 @@ export const executeStatements = async (statements: string): Promise<void> => {
     const db = await getDatabaseConnection()
     await db.execute(statements)
     await persistWebStoreIfNeeded()
+  })
+}
+
+export interface DatabaseTransaction {
+  query<TRow>(statement: string, values?: unknown[]): Promise<TRow[]>
+  run(statement: string, values?: unknown[]): Promise<capSQLiteChanges>
+}
+
+export const runInTransaction = async <T>(
+  operation: (transaction: DatabaseTransaction) => Promise<T>,
+): Promise<T> => {
+  return withWriteLock(async () => {
+    const db = await getDatabaseConnection()
+    await db.beginTransaction()
+
+    const transaction: DatabaseTransaction = {
+      async query<TRow>(statement: string, values: unknown[] = []): Promise<TRow[]> {
+        const result = await db.query(statement, values)
+        return (result.values ?? []) as TRow[]
+      },
+      run(statement: string, values: unknown[] = []): Promise<capSQLiteChanges> {
+        return db.run(statement, values)
+      },
+    }
+
+    try {
+      const result = await operation(transaction)
+      await db.commitTransaction()
+      await persistWebStoreIfNeeded()
+      return result
+    } catch (error) {
+      await db.rollbackTransaction()
+      throw error
+    }
   })
 }
 

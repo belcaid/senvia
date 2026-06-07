@@ -16,12 +16,19 @@ import {
 } from '@/services/ble-sensor.service'
 import { runAlertEngineForPlant } from '@/services/alert-engine.service'
 import { notifyForAlerts } from '@/services/notifications.service'
+import {
+  persistSensorMeasurement,
+  persistSensorPairing,
+} from '@/services/sensor-persistence.service'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useThresholdProfilesStore } from '@/stores/threshold-profiles.store'
 import type { BleErrorCode, BleMeasurementSnapshot, BleStateStatus } from '@/types/ble.types'
+import type { Measurement, MeasurementSource } from '@/types/measurement.types'
 import type { SensorModel } from '@/types/sensor-device.types'
+import { evaluatePlantHealth } from '@/utils/plant-health.util'
 
 export interface BleScanDevice {
   deviceId: string
@@ -495,17 +502,6 @@ export const useBleStore = defineStore('ble', {
           throw new BleApplicationError('sensor_already_paired', getBleDefaultErrorMessage('sensor_already_paired'))
         }
 
-        const capteurActuelPlante = sensorsStore.capteurs.find(
-          (item) => item.plantId === plantId && item.deviceIdentifier !== deviceId,
-        )
-
-        if (capteurActuelPlante) {
-          await sensorsStore.modifierCapteur(capteurActuelPlante.id, {
-            plantId: null,
-            lastSeenAt: new Date().toISOString(),
-          })
-        }
-
         const mesures = await this.testerConnexionEtLireMesures(deviceId, { forceBatteryRead: true })
 
         if (mesures === null) {
@@ -516,71 +512,19 @@ export const useBleStore = defineStore('ble', {
         const deviceName = device?.name ?? capteurExistant?.deviceName ?? toDeviceNameFallback(deviceId)
         const sensorModel = infererModeleCapteur(deviceName)
 
-        let capteurId: string
-        let batteryLevel = mesures.batteryLevel
-        let batteryReadAt = mesures.batteryReadAt
-
-        if (capteurExistant) {
-          const currentBatteryLevel = capteurExistant.batteryLevel
-          const currentBatteryReadAt = capteurExistant.lastBatteryReadAt
-
-          batteryLevel = batteryLevel ?? currentBatteryLevel
-          batteryReadAt = batteryReadAt ?? currentBatteryReadAt
-
-          const updated = await sensorsStore.modifierCapteur(capteurExistant.id, {
-            plantId,
-            deviceName,
-            model: sensorModel,
-            batteryLevel,
-            lastBatteryReadAt: batteryReadAt,
-            lastSeenAt: mesures.measuredAt,
-          })
-
-          if (!updated) {
-            throw new BleApplicationError('unknown', "Impossible de mettre a jour le capteur associe.")
-          }
-
-          capteurId = updated.id
-        } else {
-          const created = await sensorsStore.ajouterCapteur({
-            plantId,
-            deviceIdentifier: deviceId,
-            deviceName,
-            model: sensorModel,
-            batteryLevel,
-            lastBatteryReadAt: batteryReadAt,
-            pairedAt: new Date().toISOString(),
-            lastSeenAt: mesures.measuredAt,
-          })
-
-          if (!created) {
-            throw new BleApplicationError('unknown', "Impossible d'enregistrer le capteur associe.")
-          }
-
-          capteurId = created.id
-        }
-
-        const planteModifiee = await plantsStore.modifierPlante(plantId, { sensorId: capteurId })
-
-        if (!planteModifiee) {
-          throw new BleApplicationError('unknown', "Impossible d'associer le capteur a la plante.")
-        }
-
-        const mesure = await measurementsStore.ajouterMesure({
+        const result = await persistSensorPairing({
           plantId,
-          sensorId: capteurId,
+          deviceIdentifier: deviceId,
+          deviceName,
+          model: sensorModel,
+          batteryLevel: mesures.batteryLevel,
+          batteryReadAt: mesures.batteryReadAt,
           measuredAt: mesures.measuredAt,
           temperature: mesures.temperature,
           moisture: mesures.moisture,
           light: mesures.light,
           conductivity: mesures.conductivity,
-          batteryLevel: batteryLevel,
-          source: 'pairing_validation',
         })
-
-        if (!mesure) {
-          throw new BleApplicationError('invalid_read', getBleDefaultErrorMessage('invalid_read'))
-        }
 
         await Promise.all([
           plantsStore.chargerPlantes(),
@@ -591,14 +535,90 @@ export const useBleStore = defineStore('ble', {
         await notifyForAlerts(createdAlerts)
 
         return {
-          sensorId: capteurId,
-          measurementId: mesure.id,
+          sensorId: result.sensorId,
+          measurementId: result.measurementId,
         }
       } catch (error) {
         this.appliquerErreur(error, 'unknown')
         return null
       } finally {
         await this.deconnecter(deviceId, { preserveError: true })
+        this.mettreAJourEtatMetier()
+      }
+    },
+    async synchroniserPlanteAssociee(
+      plantId: string,
+      source: MeasurementSource = 'manual_sync',
+    ): Promise<Measurement | null> {
+      this.effacerErreur()
+      const plantsStore = usePlantsStore()
+      const sensorsStore = useSensorsStore()
+      const measurementsStore = useMeasurementsStore()
+      const settingsStore = useSettingsStore()
+      const thresholdProfilesStore = useThresholdProfilesStore()
+      let deviceIdentifier: string | null = null
+
+      try {
+        await Promise.all([
+          plantsStore.chargerPlantes(),
+          sensorsStore.chargerCapteurs(),
+          settingsStore.chargerParametres(),
+          thresholdProfilesStore.chargerProfils({ ensureDefaults: true }),
+        ])
+
+        const plante = plantsStore.getPlanteParId(plantId)
+        const capteur = sensorsStore.getCapteurParPlanteId(plantId)
+
+        if (!plante || !capteur) {
+          throw new BleApplicationError('sensor_not_found', 'Aucun capteur associe a cette plante.')
+        }
+
+        deviceIdentifier = capteur.deviceIdentifier
+        const snapshot = await this.testerConnexionEtLireMesures(deviceIdentifier, {
+          forceBatteryRead: false,
+        })
+
+        if (snapshot === null) {
+          return null
+        }
+
+        const profile = thresholdProfilesStore.getProfilParId(plante.thresholdProfileId)
+        const status = evaluatePlantHealth({
+          measurement: snapshot,
+          thresholdProfile: profile,
+          isStale: false,
+          staleThresholdMinutes: settingsStore.parametres.staleDataThresholdMinutes,
+        }).status
+
+        const measurement = await persistSensorMeasurement({
+          plantId,
+          sensorId: capteur.id,
+          measuredAt: snapshot.measuredAt,
+          temperature: snapshot.temperature,
+          moisture: snapshot.moisture,
+          light: snapshot.light,
+          conductivity: snapshot.conductivity,
+          batteryLevel: snapshot.batteryLevel,
+          batteryReadAt: snapshot.batteryReadAt,
+          source,
+          status,
+        })
+
+        await Promise.all([
+          plantsStore.chargerPlantes(),
+          sensorsStore.chargerCapteurs(),
+          measurementsStore.chargerDerniereMesure(plantId),
+        ])
+        const createdAlerts = await runAlertEngineForPlant(plantId)
+        await notifyForAlerts(createdAlerts)
+        return measurement
+      } catch (error) {
+        this.appliquerErreur(error, 'unknown')
+        return null
+      } finally {
+        if (deviceIdentifier !== null) {
+          await this.deconnecter(deviceIdentifier, { preserveError: true })
+        }
         this.mettreAJourEtatMetier()
       }
     },

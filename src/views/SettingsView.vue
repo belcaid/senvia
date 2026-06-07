@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="settings-page">
     <ion-header>
       <ion-toolbar>
         <ion-title>Reglages</ion-title>
@@ -7,10 +7,10 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">{{ settingsStore.erreur }}</ion-note>
-      <ion-note v-if="sensorsStore.erreur" class="feedback" color="danger">{{ sensorsStore.erreur }}</ion-note>
+      <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ settingsStore.erreur }}</ion-note>
+      <ion-note v-if="sensorsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ sensorsStore.erreur }}</ion-note>
 
-      <ion-list inset>
+      <ion-list inset class="senvia-reveal">
         <ion-list-header>
           <ion-label>Apparence</ion-label>
         </ion-list-header>
@@ -20,7 +20,60 @@
         </ion-item>
       </ion-list>
 
-      <ion-list inset>
+      <ion-list inset class="senvia-reveal">
+        <ion-list-header>
+          <ion-label>Synchronisation et donnees</ion-label>
+        </ion-list-header>
+        <ion-item>
+          <ion-label>
+            <h3>Synchroniser au retour dans l'app</h3>
+            <p>Lit successivement les capteurs associes lorsque l'app redevient active.</p>
+          </ion-label>
+          <ion-toggle
+            slot="end"
+            :checked="settings.autoSyncOnForeground"
+            @ionChange="onAutoSyncToggle"
+          />
+        </ion-item>
+        <ion-item>
+          <ion-select
+            :value="settings.preferredHistoryRange"
+            interface="popover"
+            label="Periode d'historique par defaut"
+            label-placement="stacked"
+            @ionChange="onHistoryRangeChange"
+          >
+            <ion-select-option value="24h">24 heures</ion-select-option>
+            <ion-select-option value="7d">7 jours</ion-select-option>
+            <ion-select-option value="30d">30 jours</ion-select-option>
+            <ion-select-option value="all">Tout</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item>
+          <ion-input
+            type="number"
+            min="5"
+            max="1440"
+            label="Donnees obsoletes apres (minutes)"
+            label-placement="stacked"
+            :value="settings.staleDataThresholdMinutes"
+            @ionChange="onStaleThresholdChange"
+          />
+        </ion-item>
+        <ion-item>
+          <ion-input
+            type="number"
+            min="1"
+            max="168"
+            label="Lecture batterie toutes les (heures)"
+            label-placement="stacked"
+            :value="settings.batteryReadIntervalHours"
+            @ionChange="onBatteryIntervalChange"
+          />
+        </ion-item>
+      </ion-list>
+
+      <ion-list inset class="senvia-reveal">
         <ion-list-header>
           <ion-label>Notifications</ion-label>
         </ion-list-header>
@@ -59,7 +112,7 @@
         </ion-item>
       </ion-list>
 
-      <ion-list inset>
+      <ion-list inset class="senvia-reveal">
         <ion-list-header>
           <ion-label>Informations app</ion-label>
         </ion-list-header>
@@ -75,7 +128,7 @@
           <ion-label>Plateforme</ion-label>
           <ion-note slot="end">{{ appPlatform }}</ion-note>
         </ion-item>
-        <ion-item lines="none">
+        <ion-item v-if="isDevelopment" lines="none">
           <ion-button
             expand="block"
             fill="outline"
@@ -87,7 +140,7 @@
         </ion-item>
       </ion-list>
 
-      <ion-list inset>
+      <ion-list inset class="senvia-reveal">
         <ion-list-header>
           <ion-label>Capteurs associes</ion-label>
         </ion-list-header>
@@ -138,16 +191,21 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { Capacitor } from '@capacitor/core'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSensorsStore } from '@/stores/sensors.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import type { AlertSeverity } from '@/types/alert.types'
+import type { HistoryRange } from '@/types/app-settings.types'
 import { resetAndSeedDemoData } from '@/services/demo-data.service'
+import { showErrorFeedback, showInfoFeedback, showSuccessFeedback } from '@/services/ux-feedback.service'
 import { formatDateTime } from '@/utils/date.util'
+import packageMetadata from '../../package.json'
 
 const appName = 'Senvia'
-const appVersion = '0.0.1'
+const appVersion = packageMetadata.version
 const appPlatform = Capacitor.getPlatform()
+const isDevelopment = import.meta.env.DEV
 
 const settingsStore = useSettingsStore()
 const sensorsStore = useSensorsStore()
@@ -172,25 +230,37 @@ watch(
   { immediate: true },
 )
 
-const onThemeToggle = (event: CustomEvent<{ checked: boolean }>): void => {
-  void settingsStore.sauvegarderParametres({ themeMode: event.detail.checked ? 'dark' : 'light' })
+const onThemeToggle = async (event: CustomEvent<{ checked: boolean }>): Promise<void> => {
+  const saved = await settingsStore.sauvegarderParametres({ themeMode: event.detail.checked ? 'dark' : 'light' })
+
+  if (saved !== null) {
+    await showInfoFeedback(saved.themeMode === 'dark' ? 'Mode sombre active.' : 'Mode clair active.')
+  }
 }
 
-const onNotificationsToggle = (event: CustomEvent<{ checked: boolean }>): void => {
-  void settingsStore.sauvegarderParametres({ notificationsEnabled: event.detail.checked })
+const onNotificationsToggle = async (event: CustomEvent<{ checked: boolean }>): Promise<void> => {
+  const saved = await settingsStore.sauvegarderParametres({ notificationsEnabled: event.detail.checked })
+
+  if (saved !== null) {
+    await showInfoFeedback(saved.notificationsEnabled ? 'Notifications activees.' : 'Notifications desactivees.')
+  }
 }
 
 const isAlertSeverity = (value: string): value is AlertSeverity =>
   value === 'info' || value === 'warning' || value === 'critical'
 
-const onMinimumSeverityChange = (event: CustomEvent<{ value?: string | null }>): void => {
+const onMinimumSeverityChange = async (event: CustomEvent<{ value?: string | null }>): Promise<void> => {
   const value = String(event.detail.value ?? '')
 
   if (!isAlertSeverity(value)) {
     return
   }
 
-  void settingsStore.sauvegarderParametres({ minimumNotifiedSeverity: value })
+  const saved = await settingsStore.sauvegarderParametres({ minimumNotifiedSeverity: value })
+
+  if (saved !== null) {
+    await showInfoFeedback('Niveau minimal de notification mis a jour.')
+  }
 }
 
 const onReminderInput = (event: CustomEvent<{ value?: string | null }>): void => {
@@ -204,11 +274,66 @@ const onReminderInput = (event: CustomEvent<{ value?: string | null }>): void =>
   heureRappel.value = value === null || value === undefined ? '' : String(value)
 }
 
-const onReminderBlur = (): void => {
+const onReminderBlur = async (): Promise<void> => {
   const valeurNettoyee = heureRappel.value.trim()
-  void settingsStore.sauvegarderParametres({
+  const saved = await settingsStore.sauvegarderParametres({
     preferredReminderTime: valeurNettoyee === '' ? null : valeurNettoyee,
   })
+
+  if (saved !== null) {
+    await showInfoFeedback('Heure de rappel enregistree.')
+  }
+}
+
+const onAutoSyncToggle = async (event: CustomEvent<{ checked: boolean }>): Promise<void> => {
+  await settingsStore.sauvegarderParametres({ autoSyncOnForeground: event.detail.checked })
+}
+
+const isHistoryRange = (value: string): value is HistoryRange =>
+  value === '24h' || value === '7d' || value === '30d' || value === 'all'
+
+const onHistoryRangeChange = async (
+  event: CustomEvent<{ value?: string | null }>,
+): Promise<void> => {
+  const value = String(event.detail.value ?? '')
+
+  if (isHistoryRange(value)) {
+    await settingsStore.sauvegarderParametres({ preferredHistoryRange: value })
+  }
+}
+
+const parseBoundedInteger = (
+  event: CustomEvent<{ value?: string | number | null }>,
+  min: number,
+  max: number,
+): number | null => {
+  const value = Number(event.detail.value)
+
+  if (!Number.isFinite(value)) {
+    return null
+  }
+
+  return Math.min(max, Math.max(min, Math.round(value)))
+}
+
+const onStaleThresholdChange = async (
+  event: CustomEvent<{ value?: string | number | null }>,
+): Promise<void> => {
+  const value = parseBoundedInteger(event, 5, 1440)
+
+  if (value !== null) {
+    await settingsStore.sauvegarderParametres({ staleDataThresholdMinutes: value })
+  }
+}
+
+const onBatteryIntervalChange = async (
+  event: CustomEvent<{ value?: string | number | null }>,
+): Promise<void> => {
+  const value = parseBoundedInteger(event, 1, 168)
+
+  if (value !== null) {
+    await settingsStore.sauvegarderParametres({ batteryReadIntervalHours: value })
+  }
 }
 
 const getPlantName = (plantId: string | null): string => {
@@ -258,6 +383,9 @@ const confirmerRechargementDemo = async (): Promise<void> => {
   try {
     await resetAndSeedDemoData()
     await Promise.all([plantsStore.chargerPlantes(), sensorsStore.chargerCapteurs()])
+    await showSuccessFeedback('Donnees demo rechargees.')
+  } catch {
+    await showErrorFeedback("Le rechargement des donnees demo a echoue.")
   } finally {
     isReloadingDemo.value = false
   }
@@ -266,11 +394,9 @@ const confirmerRechargementDemo = async (): Promise<void> => {
 onIonViewWillEnter(() => {
   void chargerReglages()
 })
-</script>
 
-<style scoped>
-.feedback {
-  display: block;
-  margin: 0.3rem 0.2rem;
-}
-</style>
+useGsapReveal({
+  rootSelector: '.settings-page',
+  itemSelector: '.senvia-reveal',
+})
+</script>

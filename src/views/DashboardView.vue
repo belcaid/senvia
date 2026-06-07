@@ -1,78 +1,65 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Dashboard</ion-title>
-        <ion-buttons slot="end">
-          <ion-button router-link="/plants/new">
-            <ion-icon slot="start" :icon="addOutline" />
-            Ajouter plante
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
+  <ion-page class="dashboard-page">
     <ion-content class="ion-padding">
-      <ion-searchbar
-        v-model="rechercheNom"
-        placeholder="Rechercher une plante"
-        show-clear-button="focus"
-      />
+      <section class="dashboard-hero senvia-reveal">
+        <div class="dashboard-hero__title-wrap">
+          <h1>Mes plantes</h1>
+          <p>{{ surveillanceSubtitle }}</p>
+        </div>
 
-      <div class="filters-grid">
-        <ion-item>
-          <ion-select
-            v-model="categorieSelectionnee"
-            interface="popover"
-            label="Categorie"
-            label-placement="stacked"
+        <div class="dashboard-hero__actions">
+          <ion-searchbar
+            class="dashboard-search"
+            v-model="rechercheNom"
+            placeholder="Rechercher..."
+            show-clear-button="focus"
+          />
+          <ion-button
+            class="dashboard-icon-action"
+            fill="clear"
+            aria-label="Ouvrir les filtres"
+            title="Filtres"
+            @click="isFiltersModalOpen = true"
           >
-            <ion-select-option value="all">Toutes</ion-select-option>
-            <ion-select-option
-              v-for="option in PLANT_CATEGORY_OPTIONS"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-item>
-          <ion-select
-            v-model="statusSelectionne"
-            interface="popover"
-            label="Statut"
-            label-placement="stacked"
+            <ion-icon aria-hidden="true" :icon="optionsOutline" />
+            <ion-badge v-if="activeFilterCount > 0" color="primary">{{ activeFilterCount }}</ion-badge>
+          </ion-button>
+          <ion-button
+            v-if="activeFilterCount > 0"
+            class="dashboard-icon-action dashboard-icon-action--ghost"
+            fill="clear"
+            aria-label="Reinitialiser les filtres"
+            title="Reinitialiser"
+            @click="reinitialiserFiltres"
           >
-            <ion-select-option value="all">Tous</ion-select-option>
-            <ion-select-option value="healthy">En sante</ion-select-option>
-            <ion-select-option value="warning">A surveiller</ion-select-option>
-            <ion-select-option value="critical">Critique</ion-select-option>
-            <ion-select-option value="stale_data">Donnees anciennes</ion-select-option>
-            <ion-select-option value="unknown">Inconnu</ion-select-option>
-          </ion-select>
-        </ion-item>
-      </div>
+            <ion-icon aria-hidden="true" :icon="closeCircleOutline" />
+          </ion-button>
+          <ion-button class="dashboard-add-button" @click="ouvrirAjoutPlante">
+            <ion-icon slot="start" :icon="addOutline" />
+            Ajouter
+          </ion-button>
+        </div>
+      </section>
 
-      <ion-note class="results-count" color="medium">
-        {{ plantesFiltrees.length }} plante{{ plantesFiltrees.length > 1 ? 's' : '' }}
+      <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
+        {{ plantsStore.erreur }}
       </ion-note>
-
-      <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
-      <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="measurementsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ measurementsStore.erreur }}
       </ion-note>
-      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">{{ settingsStore.erreur }}</ion-note>
-      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
+        {{ settingsStore.erreur }}
+      </ion-note>
+      <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
       </ion-note>
 
-      <div v-if="plantsStore.estChargement" class="loading-container">
+      <div v-if="plantsStore.estChargement" class="senvia-loading-container senvia-reveal">
         <ion-spinner name="crescent" />
+        <span>Chargement des plantes...</span>
       </div>
 
-      <div v-else-if="plantesFiltrees.length > 0" class="cards-grid">
+      <div v-else class="senvia-cards-grid dashboard-cards-grid">
         <plant-card
           v-for="plante in plantesFiltrees"
           :key="plante.id"
@@ -82,31 +69,90 @@
           @open="ouvrirPlante"
           @toggle-favorite="basculerFavori"
         />
+
+        <button type="button" class="new-plant-card senvia-reveal" @click="ouvrirAjoutPlante">
+          <span class="new-plant-card__icon">+</span>
+          <span class="new-plant-card__label">Nouvelle plante</span>
+        </button>
       </div>
 
-      <screen-placeholder
-        v-else
-        title="Aucune plante"
-        subtitle="Ajoute ta premiere plante"
-        description="Utilise recherche et filtres pour retrouver rapidement tes plantes."
-      >
-        <template #actions>
-          <ion-button router-link="/plants/new">Ajouter plante</ion-button>
-        </template>
-      </screen-placeholder>
+      <ion-note v-if="hasNoFilteredResult" class="dashboard-empty-filter senvia-reveal" color="medium">
+        Aucune plante ne correspond aux filtres actifs.
+      </ion-note>
     </ion-content>
+
+    <ion-modal
+      :is-open="isFiltersModalOpen"
+      css-class="dashboard-filters-modal"
+      @didDismiss="isFiltersModalOpen = false"
+    >
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Filtres</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="isFiltersModalOpen = false">Fermer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-list inset class="senvia-form-list">
+          <ion-item>
+            <ion-select
+              v-model="categorieSelectionnee"
+              interface="popover"
+              label="Categorie"
+              label-placement="stacked"
+            >
+              <ion-select-option value="all">Toutes</ion-select-option>
+              <ion-select-option
+                v-for="option in PLANT_CATEGORY_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-select
+              v-model="statusSelectionne"
+              interface="popover"
+              label="Statut"
+              label-placement="stacked"
+            >
+              <ion-select-option value="all">Tous</ion-select-option>
+              <ion-select-option value="healthy">En sante</ion-select-option>
+              <ion-select-option value="warning">A surveiller</ion-select-option>
+              <ion-select-option value="critical">Critique</ion-select-option>
+              <ion-select-option value="stale_data">Donnees anciennes</ion-select-option>
+              <ion-select-option value="unknown">Inconnu</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-list>
+
+        <div class="filters-modal-actions">
+          <ion-button fill="clear" @click="reinitialiserFiltres">Reinitialiser</ion-button>
+          <ion-button @click="isFiltersModalOpen = false">Appliquer</ion-button>
+        </div>
+      </ion-content>
+    </ion-modal>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import {
+  IonBadge,
   IonButton,
   IonButtons,
   IonContent,
   IonHeader,
   IonIcon,
   IonItem,
+  IonList,
+  IonModal,
   IonNote,
   IonPage,
   IonSearchbar,
@@ -117,10 +163,11 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
-import { addOutline } from 'ionicons/icons'
+import { addOutline, closeCircleOutline, optionsOutline } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
 import PlantCard from '@/components/PlantCard.vue'
-import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
+import { showErrorFeedback, showInfoFeedback } from '@/services/ux-feedback.service'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -142,6 +189,7 @@ const thresholdProfilesStore = useThresholdProfilesStore()
 const rechercheNom = ref('')
 const categorieSelectionnee = ref<CategoryFilter>('all')
 const statusSelectionne = ref<StatusFilter>('all')
+const isFiltersModalOpen = ref(false)
 
 const statusByPlantId = computed<Record<string, PlantStatus>>(() => {
   const staleThreshold = settingsStore.parametres.staleDataThresholdMinutes
@@ -176,6 +224,28 @@ const plantesFiltrees = computed(() => {
   })
 })
 
+const activeFilterCount = computed(() => {
+  let count = 0
+
+  if (categorieSelectionnee.value !== 'all') {
+    count += 1
+  }
+
+  if (statusSelectionne.value !== 'all') {
+    count += 1
+  }
+
+  return count
+})
+
+const surveillanceSubtitle = computed(() => {
+  const count = plantsStore.plantes.length
+  const suffix = count > 1 ? 'plantes' : 'plante'
+  return `Vous avez ${count} ${suffix} sous surveillance.`
+})
+
+const hasNoFilteredResult = computed(() => plantsStore.plantes.length > 0 && plantesFiltrees.value.length === 0)
+
 const chargerDashboard = async (): Promise<void> => {
   await Promise.all([
     plantsStore.chargerPlantes(),
@@ -188,57 +258,203 @@ const chargerDashboard = async (): Promise<void> => {
   await plantsStore.synchroniserStatutsRecalcules(statusByPlantId.value)
 }
 
+const ouvrirAjoutPlante = async (): Promise<void> => {
+  await router.push('/plants/new')
+}
+
 const ouvrirPlante = async (plantId: string): Promise<void> => {
   await router.push(`/plants/${plantId}`)
 }
 
 const basculerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Promise<void> => {
-  await plantsStore.marquerFavori(plantId, !isCurrentlyFavorite)
+  const updated = await plantsStore.marquerFavori(plantId, !isCurrentlyFavorite)
+
+  if (updated === null) {
+    await showErrorFeedback("Impossible de mettre a jour le favori.")
+    return
+  }
+
+  await showInfoFeedback(updated.isFavorite ? 'Ajoutee aux favoris.' : 'Retiree des favoris.')
+}
+
+const reinitialiserFiltres = (): void => {
+  rechercheNom.value = ''
+  categorieSelectionnee.value = 'all'
+  statusSelectionne.value = 'all'
 }
 
 onIonViewWillEnter(() => {
   void chargerDashboard()
 })
+
+useGsapReveal({
+  rootSelector: '.dashboard-page',
+  itemSelector: '.senvia-reveal',
+})
 </script>
 
 <style scoped>
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.dashboard-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.82rem;
+}
+
+.dashboard-hero__title-wrap h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-hero__title-wrap p {
+  margin: 0.2rem 0 0;
+  color: var(--senvia-text-muted);
+}
+
+.dashboard-hero__actions {
+  display: flex;
+  align-items: center;
   gap: 0.6rem;
 }
 
-.filters-grid ion-item {
-  border-radius: 14px;
-  overflow: hidden;
+.dashboard-search {
+  min-width: 185px;
+  max-width: 240px;
+  --background: var(--senvia-surface-2);
+  --box-shadow: none;
+  --border-radius: 14px;
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--senvia-text-muted);
+  --placeholder-opacity: 0.95;
 }
 
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 0.9rem;
-  align-items: start;
+.dashboard-icon-action {
+  --background: rgba(var(--ion-color-medium-rgb), 0.14);
+  --color: var(--ion-text-color);
+  --border-radius: 14px;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  position: relative;
 }
 
-.loading-container {
+.dashboard-icon-action ion-icon {
+  font-size: 1.02rem;
+}
+
+.dashboard-icon-action ion-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  min-height: 18px;
+  font-size: 0.66rem;
+  padding: 0 0.28rem;
+}
+
+.dashboard-icon-action--ghost {
+  --background: rgba(var(--ion-color-danger-rgb), 0.12);
+  --color: var(--ion-color-danger);
+}
+
+.dashboard-add-button {
+  --background: linear-gradient(135deg, var(--ion-color-primary), #2bcf74);
+  --color: #042111;
+  font-weight: 700;
+}
+
+.dashboard-cards-grid {
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+  margin-top: 0.3rem;
+}
+
+.new-plant-card {
+  border: 1px dashed var(--senvia-card-border);
+  border-radius: 20px;
+  min-height: 316px;
+  height: 100%;
+  background: rgba(var(--ion-color-primary-rgb), 0.04);
+  color: var(--ion-text-color);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding: 2rem 0;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.feedback {
+.new-plant-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(var(--ion-color-medium-rgb), 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.new-plant-card__label {
+  font-size: 1.12rem;
+  font-weight: 650;
+}
+
+.dashboard-empty-filter {
   display: block;
-  margin: 0.3rem 0.2rem;
+  margin: 0.75rem 0.25rem 0;
 }
 
-.results-count {
-  display: block;
-  margin: 0.55rem 0.2rem;
+.filters-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
 }
 
-@media (max-width: 680px) {
-  .filters-grid {
-    grid-template-columns: 1fr;
+@media (hover: hover) and (pointer: fine) {
+  .new-plant-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--ion-color-primary-rgb), 0.38);
+    background: rgba(var(--ion-color-primary-rgb), 0.08);
   }
+}
+
+@media (min-width: 760px) {
+  .dashboard-cards-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-hero__actions {
+    width: 100%;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-search {
+    max-width: none;
+    flex: 1;
+  }
+}
+
+:global(.dashboard-filters-modal) {
+  --width: min(96vw, 720px);
+  --height: auto;
+  --max-height: min(86vh, 640px);
+  --border-radius: 20px;
 }
 </style>

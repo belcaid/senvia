@@ -65,14 +65,16 @@ export const usePlantsStore = defineStore('plants', {
         return null
       }
     },
-    async supprimerPlante(id: string): Promise<void> {
+    async supprimerPlante(id: string): Promise<boolean> {
       this.erreur = null
 
       try {
         await plantRepository.delete(id)
         this.plantes = this.plantes.filter((item) => item.id !== id)
+        return true
       } catch (error) {
         this.erreur = toErrorMessage(error, 'Impossible de supprimer la plante')
+        return false
       }
     },
     async marquerFavori(id: string, estFavori: boolean): Promise<Plant | null> {

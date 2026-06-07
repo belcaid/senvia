@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="plant-detail-page">
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
@@ -10,31 +10,29 @@
     </ion-header>
 
     <ion-content>
-      <ion-note v-if="plantsStore.erreur" class="feedback" color="danger">{{ plantsStore.erreur }}</ion-note>
-      <ion-note v-if="thresholdProfilesStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
+      <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
       </ion-note>
-      <ion-note v-if="measurementsStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="measurementsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ measurementsStore.erreur }}
       </ion-note>
-      <ion-note v-if="sensorsStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="sensorsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ sensorsStore.erreur }}
       </ion-note>
-      <ion-note v-if="settingsStore.erreur" class="feedback" color="danger">
+      <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ settingsStore.erreur }}
       </ion-note>
-      <ion-note v-if="bleStore.erreur" class="feedback" color="danger">{{ bleStore.erreur }}</ion-note>
+      <ion-note v-if="bleStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ bleStore.erreur }}</ion-note>
 
       <template v-if="plante">
-        <section class="plant-summary ion-padding">
+        <section class="plant-summary ion-padding senvia-reveal">
           <ion-icon :icon="iconePlante" class="plant-icon" />
           <div class="plant-summary__content">
             <h2>{{ plante.name }}</h2>
             <p>{{ categorieLabel }} - {{ plante.location }}</p>
             <div class="plant-summary__chips">
-              <ion-chip :color="statutGlobalColor">
-                <ion-label>{{ statutGlobalLabel }}</ion-label>
-              </ion-chip>
+              <plant-status-badge :status="analyseSante.status" />
               <ion-chip v-if="donneesObsoletes && mesureActuelle" color="warning" outline>
                 <ion-label>Donnees obsoletes</ion-label>
               </ion-chip>
@@ -42,7 +40,7 @@
           </div>
         </section>
 
-        <ion-card class="detail-card">
+        <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Statut global</ion-card-title>
             <ion-card-subtitle>
@@ -62,7 +60,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card">
+        <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Mesures actuelles</ion-card-title>
           </ion-card-header>
@@ -82,7 +80,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card">
+        <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Informations capteur</ion-card-title>
           </ion-card-header>
@@ -102,7 +100,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card">
+        <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Historique des mesures</ion-card-title>
             <ion-card-subtitle>{{ historiqueMesures.length }} point(s) sur la periode</ion-card-subtitle>
@@ -160,7 +158,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card">
+        <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Modifier la plante</ion-card-title>
           </ion-card-header>
@@ -175,7 +173,7 @@
           </ion-card-content>
         </ion-card>
 
-        <div class="actions ion-padding-horizontal ion-padding-bottom">
+        <div class="actions ion-padding-horizontal ion-padding-bottom senvia-reveal">
           <ion-button color="danger" fill="outline" expand="block" @click="confirmerSuppression">
             Supprimer la plante
           </ion-button>
@@ -186,6 +184,7 @@
       </template>
 
       <screen-placeholder
+        class="senvia-reveal"
         v-else
         title="Plante introuvable"
         subtitle="Aucune plante correspondant a cet identifiant"
@@ -226,9 +225,10 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import MeasurementLineChart from '@/components/MeasurementLineChart.vue'
 import PlantForm, { type PlantFormValues } from '@/components/PlantForm.vue'
+import PlantStatusBadge from '@/components/PlantStatusBadge.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
-import { runAlertEngineForPlant } from '@/services/alert-engine.service'
-import { notifyForAlerts } from '@/services/notifications.service'
+import { useGsapReveal } from '@/composables/use-gsap-reveal'
+import { showErrorFeedback, showInfoFeedback, showSuccessFeedback, showWarningFeedback } from '@/services/ux-feedback.service'
 import { useBleStore } from '@/stores/ble.store'
 import { useMeasurementsStore } from '@/stores/measurements.store'
 import { usePlantsStore } from '@/stores/plants.store'
@@ -240,7 +240,6 @@ import { formatDateTime } from '@/utils/date.util'
 import { isMeasurementStale } from '@/utils/measurement-freshness.util'
 import { getCategoryLabel, getPlantIcon } from '@/utils/plant-options.util'
 import { evaluatePlantHealth } from '@/utils/plant-health.util'
-import { getPlantStatusColor, getPlantStatusLabel } from '@/utils/plant-status.util'
 
 const route = useRoute()
 const router = useRouter()
@@ -277,8 +276,6 @@ const analyseSante = computed(() =>
   }),
 )
 
-const statutGlobalLabel = computed(() => getPlantStatusLabel(analyseSante.value.status))
-const statutGlobalColor = computed(() => getPlantStatusColor(analyseSante.value.status))
 const explicationStatut = computed(() => analyseSante.value.explanation)
 
 const valeursFormulaire = computed<Partial<PlantFormValues> | undefined>(() => {
@@ -328,7 +325,7 @@ const modifierPlante = async (values: PlantFormValues): Promise<void> => {
   isSubmitting.value = true
 
   try {
-    await plantsStore.modifierPlante(plante.value.id, {
+    const updated = await plantsStore.modifierPlante(plante.value.id, {
       name: values.nom,
       category: values.categorie,
       location: values.emplacement,
@@ -336,6 +333,13 @@ const modifierPlante = async (values: PlantFormValues): Promise<void> => {
       isFavorite: values.estFavori,
       thresholdProfileId: values.thresholdProfileId,
     })
+
+    if (updated === null) {
+      await showErrorFeedback("Impossible d'enregistrer les modifications.")
+      return
+    }
+
+    await showSuccessFeedback('Plante mise a jour.')
   } finally {
     isSubmitting.value = false
   }
@@ -368,7 +372,14 @@ const confirmerSuppression = async (): Promise<void> => {
     return
   }
 
-  await plantsStore.supprimerPlante(plante.value.id)
+  const deleted = await plantsStore.supprimerPlante(plante.value.id)
+
+  if (!deleted) {
+    await showErrorFeedback('La suppression de la plante a echoue.')
+    return
+  }
+
+  await showInfoFeedback('Plante supprimee.')
   await router.replace('/tabs/dashboard')
 }
 
@@ -391,61 +402,39 @@ const onHistoryRangeChange = (event: CustomEvent): void => {
 
 const synchroniserMesures = async (): Promise<void> => {
   if (!plante.value || !capteurAssocie.value) {
+    await showWarningFeedback('Associe un capteur avant de synchroniser.')
     return
   }
 
   const currentPlant = plante.value
-  const currentSensor = capteurAssocie.value
   isSyncing.value = true
 
   try {
-    await Promise.all([bleStore.initialiser(), settingsStore.chargerParametres()])
+    const measurement = await bleStore.synchroniserPlanteAssociee(
+      currentPlant.id,
+      'plant_detail_auto_sync',
+    )
 
-    const snapshot = await bleStore.testerConnexionEtLireMesures(currentSensor.deviceIdentifier, {
-      forceBatteryRead: false,
-    })
-
-    if (snapshot === null) {
+    if (measurement === null) {
+      await showErrorFeedback(bleStore.erreur ?? 'La synchronisation a echoue.')
       return
     }
 
-    await measurementsStore.ajouterMesure({
-      plantId: currentPlant.id,
-      sensorId: currentSensor.id,
-      measuredAt: snapshot.measuredAt,
-      temperature: snapshot.temperature,
-      moisture: snapshot.moisture,
-      light: snapshot.light,
-      conductivity: snapshot.conductivity,
-      batteryLevel: snapshot.batteryLevel,
-      source: 'plant_detail_auto_sync',
-    })
-
-    await sensorsStore.modifierCapteur(currentSensor.id, {
-      batteryLevel: snapshot.batteryLevel ?? currentSensor.batteryLevel,
-      lastBatteryReadAt: snapshot.batteryReadAt ?? currentSensor.lastBatteryReadAt,
-      lastSeenAt: snapshot.measuredAt,
-    })
-
-    const nextStatus = evaluatePlantHealth({
-      measurement: snapshot,
-      thresholdProfile: profilSeuil.value,
-      isStale: false,
-      staleThresholdMinutes: staleDataThresholdMinutes.value,
-    }).status
-
-    await plantsStore.modifierPlante(currentPlant.id, { status: nextStatus })
     await measurementsStore.chargerHistoriqueParPeriode(currentPlant.id, historyRange.value, {
       limit: historyRange.value === 'all' ? 2400 : 800,
     })
-    await Promise.all([plantsStore.chargerPlantes(), sensorsStore.chargerCapteurs()])
-    const createdAlerts = await runAlertEngineForPlant(currentPlant.id)
-    await notifyForAlerts(createdAlerts)
+    await showSuccessFeedback('Synchronisation terminee.')
+  } catch {
+    await showErrorFeedback('La synchronisation a echoue.')
   } finally {
-    await bleStore.deconnecter(currentSensor.deviceIdentifier, { preserveError: true })
     isSyncing.value = false
   }
 }
+
+useGsapReveal({
+  rootSelector: '.plant-detail-page',
+  itemSelector: '.senvia-reveal',
+})
 
 onMounted(() => {
   void chargerContexte()
@@ -457,11 +446,6 @@ watch(plantId, () => {
 </script>
 
 <style scoped>
-.feedback {
-  display: block;
-  margin: 0.75rem 1rem 0;
-}
-
 .plant-summary {
   display: flex;
   align-items: center;
@@ -484,7 +468,8 @@ watch(plantId, () => {
 
 .plant-summary__content p {
   margin: 0.3rem 0 0;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
+  opacity: 1;
 }
 
 .plant-summary__chips {
@@ -505,16 +490,22 @@ watch(plantId, () => {
   gap: 0.6rem;
 }
 
+.detail-card :deep(ion-card-title),
+.detail-card :deep(ion-card-subtitle) {
+  color: var(--ion-text-color);
+  opacity: 1;
+}
+
 .detail-text,
 .detail-empty {
   margin: 0;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
 }
 
 .detail-score {
   margin: 0;
   font-size: 0.84rem;
-  color: var(--ion-color-medium-shade);
+  color: var(--senvia-text-muted);
 }
 
 .metrics-grid,
@@ -532,6 +523,12 @@ watch(plantId, () => {
   border-radius: 12px;
   padding: 0.5rem 0.58rem;
   font-size: 0.88rem;
+  color: var(--ion-text-color);
+}
+
+.metrics-grid p strong,
+.sensor-grid p strong {
+  color: var(--ion-text-color);
 }
 
 .charts-grid {
@@ -545,5 +542,11 @@ watch(plantId, () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+:global(:root[data-theme='dark']) .detail-text,
+:global(:root[data-theme='dark']) .detail-score,
+:global(:root[data-theme='dark']) .plant-summary__content p {
+  color: #e1f3e7;
 }
 </style>
