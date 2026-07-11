@@ -45,7 +45,7 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue
   font-size: 16px;
   line-height: 22px;
   
-  color: #8c8c8c;
+  color: var(--senvia-text-muted);
   
   margin: 0;
 }

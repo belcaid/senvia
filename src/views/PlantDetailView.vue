@@ -6,6 +6,26 @@
           <ion-back-button default-href="/tabs/dashboard" />
         </ion-buttons>
         <ion-title>{{ plante?.name ?? 'Detail plante' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button
+            v-if="plante"
+            fill="clear"
+            class="detail-toolbar-btn"
+            aria-label="Modifier la plante"
+            @click="isEditModalOpen = true"
+          >
+            <ion-icon slot="icon-only" :icon="createOutline" />
+          </ion-button>
+          <ion-button
+            v-if="plante"
+            fill="clear"
+            class="detail-toolbar-btn detail-toolbar-btn--danger"
+            aria-label="Supprimer la plante"
+            @click="confirmerSuppression"
+          >
+            <ion-icon slot="icon-only" :icon="trashOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -158,26 +178,9 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card senvia-card senvia-reveal">
-          <ion-card-header>
-            <ion-card-title>Modifier la plante</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <plant-form
-              :initial-values="valeursFormulaire"
-              :threshold-profiles="thresholdProfilesStore.profils"
-              :is-submitting="isSubmitting"
-              submit-label="Enregistrer les modifications"
-              @submit="modifierPlante"
-            />
-          </ion-card-content>
-        </ion-card>
-
         <div class="actions ion-padding-horizontal ion-padding-bottom senvia-reveal">
-          <ion-button color="danger" fill="outline" expand="block" @click="confirmerSuppression">
-            Supprimer la plante
-          </ion-button>
-          <ion-button :router-link="`/plants/${plante.id}/pairing`" expand="block" fill="clear">
+          <ion-button :router-link="`/plants/${plante.id}/pairing`" expand="block" fill="outline">
+            <ion-icon slot="start" :icon="bluetoothOutline" />
             Associer un capteur BLE
           </ion-button>
         </div>
@@ -195,6 +198,34 @@
         </template>
       </screen-placeholder>
     </ion-content>
+
+    <ion-modal
+      :is-open="isEditModalOpen"
+      :initial-breakpoint="0.92"
+      :breakpoints="[0, 0.92, 1]"
+      @didDismiss="isEditModalOpen = false"
+    >
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Modifier la plante</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" @click="isEditModalOpen = false">
+              <ion-icon slot="icon-only" :icon="closeOutline" />
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <plant-form
+          v-if="isEditModalOpen"
+          :initial-values="valeursFormulaire"
+          :threshold-profiles="thresholdProfilesStore.profils"
+          :is-submitting="isSubmitting"
+          submit-label="Enregistrer les modifications"
+          @submit="modifierEtFermer"
+        />
+      </ion-content>
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -215,6 +246,7 @@ import {
   IonHeader,
   IonIcon,
   IonLabel,
+  IonModal,
   IonNote,
   IonPage,
   IonSegment,
@@ -222,6 +254,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
+import { bluetoothOutline, closeOutline, createOutline, trashOutline } from 'ionicons/icons'
 import { useRoute, useRouter } from 'vue-router'
 import MeasurementLineChart from '@/components/MeasurementLineChart.vue'
 import PlantForm, { type PlantFormValues } from '@/components/PlantForm.vue'
@@ -253,6 +286,7 @@ const thresholdProfilesStore = useThresholdProfilesStore()
 
 const isSubmitting = ref(false)
 const isSyncing = ref(false)
+const isEditModalOpen = ref(false)
 const historyRange = ref<HistoryRange>('7d')
 
 const plantId = computed(() => String(route.params.plantId ?? ''))
@@ -342,6 +376,13 @@ const modifierPlante = async (values: PlantFormValues): Promise<void> => {
     await showSuccessFeedback('Plante mise a jour.')
   } finally {
     isSubmitting.value = false
+  }
+}
+
+const modifierEtFermer = async (values: PlantFormValues): Promise<void> => {
+  await modifierPlante(values)
+  if (!plantsStore.erreur) {
+    isEditModalOpen.value = false
   }
 }
 
@@ -536,6 +577,16 @@ watch(plantId, () => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.65rem;
+}
+
+.detail-toolbar-btn {
+  --color: var(--ion-text-color);
+  width: 40px;
+  height: 40px;
+}
+
+.detail-toolbar-btn--danger {
+  --color: var(--ion-color-danger);
 }
 
 .actions {

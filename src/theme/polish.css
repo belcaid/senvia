@@ -62,14 +62,69 @@ ion-modal ion-content {
 
 :root[data-theme='light'] ion-searchbar {
   --color: var(--ion-text-color);
+  --icon-color: var(--senvia-control-icon);
+  --clear-button-color: var(--senvia-control-icon);
   --placeholder-color: #4b6654;
   --placeholder-opacity: 0.9;
 }
 
 :root[data-theme='dark'] ion-searchbar {
   --color: var(--ion-text-color);
+  --icon-color: var(--senvia-control-icon);
+  --clear-button-color: var(--senvia-control-icon);
   --placeholder-color: #def3e6;
   --placeholder-opacity: 0.95;
+}
+
+ion-card-title,
+ion-list-header,
+ion-list-header ion-label,
+ion-item ion-label,
+ion-select,
+ion-input {
+  color: var(--ion-text-color);
+  opacity: 1;
+}
+
+ion-input {
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--senvia-text-muted);
+  --placeholder-opacity: 0.9;
+}
+
+ion-select {
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--senvia-text-muted);
+}
+
+ion-segment {
+  --background: rgba(var(--ion-color-medium-rgb), 0.1);
+}
+
+ion-segment-button {
+  --color: var(--senvia-text-muted);
+  --color-checked: var(--ion-color-primary-contrast);
+  --background-checked: var(--ion-color-primary);
+  --indicator-color: transparent;
+}
+
+ion-modal ion-toolbar {
+  --background: var(--senvia-overlay-background);
+  --color: var(--ion-text-color);
+}
+
+ion-modal ion-content {
+  --background: var(--senvia-overlay-background);
+  --color: var(--ion-text-color);
+}
+
+:root[data-theme='dark'] ion-modal ion-item,
+:root[data-theme='dark'] ion-popover ion-item {
+  --background: var(--senvia-control-background);
+}
+
+:root[data-theme='dark'] ion-chip[color='medium'] {
+  --color: var(--ion-text-color);
 }
 
 :root[data-theme='dark'] ion-list-header,

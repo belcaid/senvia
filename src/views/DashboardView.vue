@@ -90,13 +90,20 @@
         <ion-toolbar>
           <ion-title>Filtres</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="isFiltersModalOpen = false">Fermer</ion-button>
+            <ion-button
+              class="filters-modal-close"
+              fill="clear"
+              aria-label="Fermer les filtres"
+              @click="isFiltersModalOpen = false"
+            >
+              <ion-icon slot="icon-only" :icon="closeOutline" />
+            </ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
-      <ion-content class="ion-padding">
-        <ion-list inset class="senvia-form-list">
+      <ion-content class="dashboard-filters-content ion-padding">
+        <ion-list class="senvia-form-list filters-modal-list">
           <ion-item>
             <ion-select
               v-model="categorieSelectionnee"
@@ -163,7 +170,7 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
-import { addOutline, closeCircleOutline, optionsOutline } from 'ionicons/icons'
+import { addOutline, closeCircleOutline, closeOutline, optionsOutline } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
 import PlantCard from '@/components/PlantCard.vue'
 import { useGsapReveal } from '@/composables/use-gsap-reveal'
@@ -304,13 +311,15 @@ useGsapReveal({
 
 .dashboard-hero__title-wrap h1 {
   margin: 0;
-  font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  font-weight: 720;
   letter-spacing: -0.02em;
 }
 
 .dashboard-hero__title-wrap p {
   margin: 0.2rem 0 0;
   color: var(--senvia-text-muted);
+  font-size: 0.88rem;
 }
 
 .dashboard-hero__actions {
@@ -328,6 +337,7 @@ useGsapReveal({
   --color: var(--ion-text-color);
   --placeholder-color: var(--senvia-text-muted);
   --placeholder-opacity: 0.95;
+  font-size: 0.86rem;
 }
 
 .dashboard-icon-action {
@@ -364,7 +374,8 @@ useGsapReveal({
 .dashboard-add-button {
   --background: linear-gradient(135deg, var(--ion-color-primary), #2bcf74);
   --color: #042111;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 680;
 }
 
 .dashboard-cards-grid {
@@ -403,8 +414,8 @@ useGsapReveal({
 }
 
 .new-plant-card__label {
-  font-size: 1.12rem;
-  font-weight: 650;
+  font-size: 0.95rem;
+  font-weight: 640;
 }
 
 .dashboard-empty-filter {
@@ -417,6 +428,14 @@ useGsapReveal({
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.85rem;
+}
+
+.filters-modal-list {
+  margin: 0;
+}
+
+.filters-modal-list ion-select {
+  font-size: 0.9rem;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -452,9 +471,38 @@ useGsapReveal({
 }
 
 :global(.dashboard-filters-modal) {
-  --width: min(96vw, 720px);
-  --height: auto;
-  --max-height: min(86vh, 640px);
+  --width: min(92vw, 520px);
+  --height: 330px;
+  --max-height: 86vh;
   --border-radius: 20px;
+}
+
+:global(.dashboard-filters-modal .filters-modal-close) {
+  --color: var(--ion-text-color);
+  width: 42px;
+  height: 42px;
+  margin-right: 0.25rem;
+}
+
+:global(.dashboard-filters-modal .filters-modal-close ion-icon) {
+  font-size: 1.25rem;
+}
+
+:global(.dashboard-filters-modal ion-title) {
+  font-size: 1rem;
+  font-weight: 680;
+}
+
+:global(.dashboard-filters-modal ion-toolbar ion-button),
+:global(.dashboard-filters-modal .filters-modal-actions ion-button) {
+  font-size: 0.82rem;
+}
+
+@media (max-width: 560px) {
+  :global(.dashboard-filters-modal) {
+    --width: calc(100% - 1.25rem);
+    --height: 350px;
+    --border-radius: 18px;
+  }
 }
 </style>

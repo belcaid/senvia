@@ -10,23 +10,19 @@
       <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ settingsStore.erreur }}</ion-note>
       <ion-note v-if="sensorsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ sensorsStore.erreur }}</ion-note>
 
-      <ion-list inset class="senvia-reveal">
-        <ion-list-header>
-          <ion-label>Apparence</ion-label>
-        </ion-list-header>
-        <ion-item>
+      <p class="settings-section-label senvia-reveal">Apparence</p>
+      <ion-list inset class="settings-list senvia-reveal">
+        <ion-item lines="none">
           <ion-label>Mode sombre</ion-label>
           <ion-toggle slot="end" :checked="isDarkMode" @ionChange="onThemeToggle" />
         </ion-item>
       </ion-list>
 
-      <ion-list inset class="senvia-reveal">
-        <ion-list-header>
-          <ion-label>Synchronisation et donnees</ion-label>
-        </ion-list-header>
+      <p class="settings-section-label senvia-reveal">Synchronisation</p>
+      <ion-list inset class="settings-list senvia-reveal">
         <ion-item>
           <ion-label>
-            <h3>Synchroniser au retour dans l'app</h3>
+            <span class="settings-item-title">Sync au retour dans l'app</span>
             <p>Lit successivement les capteurs associes lorsque l'app redevient active.</p>
           </ion-label>
           <ion-toggle
@@ -54,18 +50,18 @@
             type="number"
             min="5"
             max="1440"
-            label="Donnees obsoletes apres (minutes)"
+            label="Donnees obsoletes apres (min)"
             label-placement="stacked"
             :value="settings.staleDataThresholdMinutes"
             @ionChange="onStaleThresholdChange"
           />
         </ion-item>
-        <ion-item>
+        <ion-item lines="none">
           <ion-input
             type="number"
             min="1"
             max="168"
-            label="Lecture batterie toutes les (heures)"
+            label="Lecture batterie toutes les (h)"
             label-placement="stacked"
             :value="settings.batteryReadIntervalHours"
             @ionChange="onBatteryIntervalChange"
@@ -73,10 +69,8 @@
         </ion-item>
       </ion-list>
 
-      <ion-list inset class="senvia-reveal">
-        <ion-list-header>
-          <ion-label>Notifications</ion-label>
-        </ion-list-header>
+      <p class="settings-section-label senvia-reveal">Notifications</p>
+      <ion-list inset class="settings-list senvia-reveal">
         <ion-item>
           <ion-label>Notifications actives</ion-label>
           <ion-toggle
@@ -88,7 +82,7 @@
         <ion-item>
           <ion-input
             type="time"
-            label="Heure de rappel"
+            label="Heure de rappel quotidien"
             label-placement="stacked"
             :value="heureRappel"
             :disabled="!settings.notificationsEnabled"
@@ -96,7 +90,7 @@
             @ionBlur="onReminderBlur"
           />
         </ion-item>
-        <ion-item>
+        <ion-item lines="none">
           <ion-select
             :value="settings.minimumNotifiedSeverity"
             interface="popover"
@@ -105,26 +99,47 @@
             :disabled="!settings.notificationsEnabled"
             @ionChange="onMinimumSeverityChange"
           >
-            <ion-select-option value="info">Info</ion-select-option>
-            <ion-select-option value="warning">Warning</ion-select-option>
-            <ion-select-option value="critical">Critique</ion-select-option>
+            <ion-select-option value="info">Info et plus</ion-select-option>
+            <ion-select-option value="warning">Avertissement et plus</ion-select-option>
+            <ion-select-option value="critical">Critique uniquement</ion-select-option>
           </ion-select>
         </ion-item>
       </ion-list>
 
-      <ion-list inset class="senvia-reveal">
-        <ion-list-header>
-          <ion-label>Informations app</ion-label>
-        </ion-list-header>
-        <ion-item>
-          <ion-label>Nom</ion-label>
-          <ion-note slot="end">{{ appName }}</ion-note>
+      <p class="settings-section-label senvia-reveal">Capteurs associes</p>
+      <ion-list inset class="settings-list senvia-reveal">
+        <ion-item v-if="capteursAssocies.length === 0" lines="none">
+          <ion-label class="settings-item-empty">Aucun capteur associe.</ion-label>
         </ion-item>
+
+        <template v-else>
+          <ion-item>
+            <ion-label>
+              <span class="settings-item-title">Batterie connue</span>
+            </ion-label>
+            <ion-note slot="end">{{ batteriesConnues }} / {{ capteursAssocies.length }}</ion-note>
+          </ion-item>
+          <ion-item
+            v-for="(capteur, index) in capteursAssocies"
+            :key="capteur.id"
+            :lines="index < capteursAssocies.length - 1 ? undefined : 'none'"
+          >
+            <ion-label>
+              <span class="settings-item-title">{{ capteur.deviceName }}</span>
+              <p>{{ getPlantName(capteur.plantId) }} · {{ formatDateTime(capteur.lastSeenAt, 'Jamais vu') }}</p>
+            </ion-label>
+            <ion-note slot="end">{{ getBatteryLabel(capteur.batteryLevel) }}</ion-note>
+          </ion-item>
+        </template>
+      </ion-list>
+
+      <p class="settings-section-label senvia-reveal">A propos</p>
+      <ion-list inset class="settings-list senvia-reveal">
         <ion-item>
           <ion-label>Version</ion-label>
-          <ion-note slot="end">{{ appVersion }}</ion-note>
+          <ion-note slot="end">{{ appName }} {{ appVersion }}</ion-note>
         </ion-item>
-        <ion-item>
+        <ion-item :lines="isDevelopment ? undefined : 'none'">
           <ion-label>Plateforme</ion-label>
           <ion-note slot="end">{{ appPlatform }}</ion-note>
         </ion-item>
@@ -132,37 +147,12 @@
           <ion-button
             expand="block"
             fill="outline"
+            color="medium"
             :disabled="isReloadingDemo"
             @click="confirmerRechargementDemo"
           >
             {{ isReloadingDemo ? 'Rechargement...' : 'Recharger donnees demo' }}
           </ion-button>
-        </ion-item>
-      </ion-list>
-
-      <ion-list inset class="senvia-reveal">
-        <ion-list-header>
-          <ion-label>Capteurs associes</ion-label>
-        </ion-list-header>
-
-        <ion-item>
-          <ion-label>
-            <h3>Etat batterie connu</h3>
-            <p>{{ batteriesConnues }} / {{ capteursAssocies.length }} capteurs</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-item v-for="capteur in capteursAssocies" :key="capteur.id">
-          <ion-label>
-            <h3>{{ capteur.deviceName }}</h3>
-            <p>Plante: {{ getPlantName(capteur.plantId) }}</p>
-            <p>Dernier contact: {{ formatDateTime(capteur.lastSeenAt, 'Inconnu') }}</p>
-          </ion-label>
-          <ion-note slot="end">{{ getBatteryLabel(capteur.batteryLevel) }}</ion-note>
-        </ion-item>
-
-        <ion-item v-if="capteursAssocies.length === 0">
-          <ion-label>Aucun capteur associe.</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -180,7 +170,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonListHeader,
   IonNote,
   IonPage,
   IonSelect,
@@ -400,3 +389,44 @@ useGsapReveal({
   itemSelector: '.senvia-reveal',
 })
 </script>
+
+<style scoped>
+.settings-section-label {
+  margin: 1.1rem 0.75rem 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--senvia-text-muted);
+}
+
+.settings-list {
+  margin-bottom: 0;
+}
+
+.settings-list ion-item {
+  --min-height: 52px;
+  font-size: 1rem;
+}
+
+.settings-list ion-item ion-label {
+  font-size: 1rem;
+}
+
+.settings-list ion-item ion-note[slot='end'] {
+  font-size: 0.9rem;
+  color: var(--senvia-text-muted);
+}
+
+.settings-item-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ion-text-color);
+  display: block;
+}
+
+.settings-item-empty {
+  color: var(--senvia-text-muted);
+  font-size: 0.9rem;
+}
+</style>

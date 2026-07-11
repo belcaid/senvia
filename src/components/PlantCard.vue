@@ -4,7 +4,7 @@
       <div class="plant-card__top">
         <div class="plant-card__identity">
           <ion-icon class="plant-card__icon" :icon="plantIcon" />
-          <div>
+          <div class="plant-card__name-wrap">
             <ion-card-title>{{ plant.name }}</ion-card-title>
             <ion-card-subtitle class="senvia-muted">{{ plant.location }}</ion-card-subtitle>
           </div>
@@ -165,12 +165,15 @@ const updatedAtLabel = computed(() => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.6rem;
+  padding-right: 0.25rem;
 }
 
 .plant-card__identity {
   display: flex;
   align-items: flex-start;
   gap: 0.72rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .plant-card__icon {
@@ -179,17 +182,24 @@ const updatedAtLabel = computed(() => {
   background: rgba(var(--ion-color-primary-rgb), 0.16);
   padding: 0.52rem;
   border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.plant-card__name-wrap {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .plant-card :deep(ion-card-title) {
-  font-size: 1.56rem;
-  font-weight: 780;
+  font-size: 1.22rem;
+  font-weight: 740;
   letter-spacing: -0.018em;
   color: #f2fff6;
 }
 
 .plant-card :deep(ion-card-subtitle) {
   opacity: 1;
+  font-size: 0.78rem;
 }
 
 .plant-card :deep(ion-card-header) {
@@ -211,6 +221,7 @@ const updatedAtLabel = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.2rem;
+  flex-shrink: 0;
 }
 
 .plant-card__open {
@@ -226,6 +237,11 @@ const updatedAtLabel = computed(() => {
   gap: 0.35rem;
   flex-wrap: wrap;
   margin-top: 0.66rem;
+}
+
+.plant-card__chips :deep(ion-chip) {
+  height: 26px;
+  font-size: 0.72rem;
 }
 
 .measurements-grid {
@@ -270,7 +286,7 @@ const updatedAtLabel = computed(() => {
 }
 
 .metric-cell strong {
-  font-size: 1.02rem;
+  font-size: 0.92rem;
   color: #f1fff5;
 }
 
@@ -288,6 +304,7 @@ const updatedAtLabel = computed(() => {
 
 .plant-card__updated {
   color: rgba(231, 245, 236, 0.86);
+  font-size: 0.76rem;
 }
 
 @media (hover: hover) and (pointer: fine) {

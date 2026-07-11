@@ -3,7 +3,7 @@
     <ion-tabs>
       <ion-router-outlet />
 
-      <ion-tab-bar slot="bottom">
+      <ion-tab-bar class="senvia-tab-bar" slot="bottom">
         <ion-tab-button tab="dashboard" href="/tabs/dashboard">
           <ion-icon aria-hidden="true" :icon="gridOutline" />
           <ion-label>Dashboard</ion-label>
@@ -40,3 +40,34 @@ import {
 } from '@ionic/vue'
 import { gridOutline, heartOutline, notificationsOutline, settingsOutline } from 'ionicons/icons'
 </script>
+
+<style scoped>
+.senvia-tab-bar {
+  height: 58px;
+}
+
+.senvia-tab-bar ion-tab-button {
+  font-size: 0.7rem;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+}
+
+.senvia-tab-bar ion-icon {
+  font-size: 1.15rem;
+  margin-bottom: 0.12rem;
+}
+
+@media (min-width: 768px) {
+  .senvia-tab-bar {
+    height: 54px;
+  }
+
+  .senvia-tab-bar ion-tab-button {
+    font-size: 0.68rem;
+  }
+
+  .senvia-tab-bar ion-icon {
+    font-size: 1.05rem;
+  }
+}
+</style>
