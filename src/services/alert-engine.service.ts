@@ -2,6 +2,7 @@ import { AlertRepository, MeasurementRepository, PlantRepository, SensorDeviceRe
 import { getAppSettingsPreference } from '@/services/preferences.service'
 import { ensureDefaultThresholdProfiles } from '@/services/threshold-profiles.service'
 import type { Alert, AlertSeverity, AlertType } from '@/types/alert.types'
+import { getAlertReconciliationDecision } from '@/utils/alert-lifecycle.util'
 import { isMeasurementStale } from '@/utils/measurement-freshness.util'
 import { evaluatePlantHealth } from '@/utils/plant-health.util'
 
@@ -13,20 +14,9 @@ const alertRepository = new AlertRepository()
 const BATTERY_WARNING_THRESHOLD = 20
 const BATTERY_CRITICAL_THRESHOLD = 10
 
-const ALERT_REPEAT_MINUTES_BY_TYPE: Record<AlertType, number> = {
-  humidity_low: 90,
-  humidity_high: 90,
-  temperature_out_of_range: 90,
-  light_low: 120,
-  light_high: 120,
-  conductivity_low: 120,
-  conductivity_high: 120,
-  sensor_battery_low: 12 * 60,
-  stale_data: 6 * 60,
-}
-
 interface AlertCandidate {
   plantId: string
+  sensorId: string
   type: AlertType
   severity: AlertSeverity
   title: string
@@ -39,54 +29,9 @@ const parseTimestamp = (value: string): number | null => {
   return Number.isFinite(timestamp) ? timestamp : null
 }
 
-const severityRank = (severity: AlertSeverity): number => {
-  switch (severity) {
-    case 'critical':
-      return 3
-    case 'warning':
-      return 2
-    case 'info':
-    default:
-      return 1
-  }
-}
-
-const shouldSkipCandidate = (
-  previousAlert: Alert | null,
-  candidate: AlertCandidate,
-  repeatMinutes: number,
-): boolean => {
-  if (previousAlert === null) {
-    return false
-  }
-
-  if (
-    previousAlert.measurementId !== null &&
-    candidate.measurementId !== null &&
-    previousAlert.measurementId === candidate.measurementId &&
-    previousAlert.message === candidate.message &&
-    previousAlert.severity === candidate.severity
-  ) {
-    return true
-  }
-
-  const previousTimestamp = parseTimestamp(previousAlert.createdAt)
-
-  if (previousTimestamp === null) {
-    return false
-  }
-
-  const elapsedMinutes = (Date.now() - previousTimestamp) / 60000
-
-  if (elapsedMinutes < repeatMinutes) {
-    return severityRank(candidate.severity) <= severityRank(previousAlert.severity)
-  }
-
-  return false
-}
-
 const buildIssueAlert = (
   plantId: string,
+  sensorId: string,
   measurementId: string,
   issue: ReturnType<typeof evaluatePlantHealth>['issues'][number],
 ): AlertCandidate => {
@@ -98,6 +43,7 @@ const buildIssueAlert = (
   if (issue.key === 'moisture') {
     return {
       plantId,
+      sensorId,
       type: issue.direction === 'low' ? 'humidity_low' : 'humidity_high',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
       title: `Humidite ${directionText}`,
@@ -109,6 +55,7 @@ const buildIssueAlert = (
   if (issue.key === 'temperature') {
     return {
       plantId,
+      sensorId,
       type: 'temperature_out_of_range',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
       title: 'Temperature hors plage',
@@ -120,6 +67,7 @@ const buildIssueAlert = (
   if (issue.key === 'light') {
     return {
       plantId,
+      sensorId,
       type: issue.direction === 'low' ? 'light_low' : 'light_high',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
       title: `Lumiere ${directionText}`,
@@ -130,6 +78,7 @@ const buildIssueAlert = (
 
   return {
     plantId,
+    sensorId,
     type: issue.direction === 'low' ? 'conductivity_low' : 'conductivity_high',
     severity: issue.status === 'critical' ? 'critical' : 'warning',
     title: `Fertilite ${directionText}`,
@@ -140,11 +89,13 @@ const buildIssueAlert = (
 
 const buildStaleAlert = (
   plantId: string,
+  sensorId: string,
   options: { hasMeasurement: boolean; staleThresholdMinutes: number },
 ): AlertCandidate => {
   if (!options.hasMeasurement) {
     return {
       plantId,
+      sensorId,
       type: 'stale_data',
       severity: 'warning',
       title: 'Donnees obsoletes',
@@ -155,6 +106,7 @@ const buildStaleAlert = (
 
   return {
     plantId,
+    sensorId,
     type: 'stale_data',
     severity: 'warning',
     title: 'Donnees obsoletes',
@@ -163,10 +115,16 @@ const buildStaleAlert = (
   }
 }
 
-const buildBatteryAlert = (plantId: string, batteryLevel: number, measurementId: string | null): AlertCandidate => {
+const buildBatteryAlert = (
+  plantId: string,
+  sensorId: string,
+  batteryLevel: number,
+  measurementId: string | null,
+): AlertCandidate => {
   const severity: AlertSeverity = batteryLevel <= BATTERY_CRITICAL_THRESHOLD ? 'critical' : 'warning'
   return {
     plantId,
+    sensorId,
     type: 'sensor_battery_low',
     severity,
     title: 'Batterie capteur faible',
@@ -176,15 +134,28 @@ const buildBatteryAlert = (plantId: string, batteryLevel: number, measurementId:
 }
 
 const createAlertIfNeeded = async (candidate: AlertCandidate): Promise<Alert | null> => {
-  const previous = await alertRepository.getLatestByPlantAndType(candidate.plantId, candidate.type)
-  const repeatMinutes = ALERT_REPEAT_MINUTES_BY_TYPE[candidate.type] ?? 120
+  const previous = await alertRepository.getOpenByPlantAndType(candidate.plantId, candidate.type)
+  const decision = getAlertReconciliationDecision(previous, candidate)
 
-  if (shouldSkipCandidate(previous, candidate, repeatMinutes)) {
-    return null
+  if (previous !== null && decision === 'replace') {
+    await alertRepository.resolve(previous.id)
+  } else if (previous !== null) {
+    const isEscalation = decision === 'escalate'
+    const updated = await alertRepository.updateOpenAlert(previous.id, {
+      sensorId: candidate.sensorId,
+      severity: candidate.severity,
+      title: candidate.title,
+      message: candidate.message,
+      measurementId: candidate.measurementId,
+      markUnread: isEscalation,
+    })
+
+    return isEscalation ? updated : null
   }
 
   return alertRepository.create({
     plantId: candidate.plantId,
+    sensorId: candidate.sensorId,
     type: candidate.type,
     severity: candidate.severity,
     title: candidate.title,
@@ -195,11 +166,10 @@ const createAlertIfNeeded = async (candidate: AlertCandidate): Promise<Alert | n
 }
 
 export const runAlertEngineForPlant = async (plantId: string): Promise<Alert[]> => {
-  const [settings, profiles, plant, measurement, sensor] = await Promise.all([
+  const [settings, profiles, plant, sensor] = await Promise.all([
     getAppSettingsPreference(),
     ensureDefaultThresholdProfiles(),
     plantRepository.findById(plantId),
-    measurementRepository.getLatestByPlantId(plantId),
     sensorRepository.findByPlantId(plantId),
   ])
 
@@ -207,6 +177,12 @@ export const runAlertEngineForPlant = async (plantId: string): Promise<Alert[]> 
     return []
   }
 
+  if (sensor === null) {
+    await alertRepository.resolveOpenByPlantExceptTypes(plantId, [])
+    return []
+  }
+
+  const measurement = await measurementRepository.getLatestBySensorId(sensor.id)
   const profile = plant.thresholdProfileId ? profiles.find((item) => item.id === plant.thresholdProfileId) : undefined
   const stale = isMeasurementStale(measurement?.measuredAt, settings.staleDataThresholdMinutes)
   const plantCreatedAtTimestamp = parseTimestamp(plant.createdAt)
@@ -225,13 +201,13 @@ export const runAlertEngineForPlant = async (plantId: string): Promise<Alert[]> 
 
   if (measurement && health.issues.length > 0) {
     for (const issue of health.issues) {
-      candidates.push(buildIssueAlert(plantId, measurement.id, issue))
+      candidates.push(buildIssueAlert(plantId, sensor.id, measurement.id, issue))
     }
   }
 
   if (stale && (measurement !== null || canAlertMissingMeasurement)) {
     candidates.push(
-      buildStaleAlert(plantId, {
+      buildStaleAlert(plantId, sensor.id, {
         hasMeasurement: measurement !== null,
         staleThresholdMinutes: settings.staleDataThresholdMinutes,
       }),
@@ -241,7 +217,7 @@ export const runAlertEngineForPlant = async (plantId: string): Promise<Alert[]> 
   const sensorBatteryLevel = sensor?.batteryLevel ?? null
 
   if (sensorBatteryLevel !== null && sensorBatteryLevel <= BATTERY_WARNING_THRESHOLD) {
-    candidates.push(buildBatteryAlert(plantId, sensorBatteryLevel, measurement?.id ?? null))
+    candidates.push(buildBatteryAlert(plantId, sensor.id, sensorBatteryLevel, measurement?.id ?? null))
   }
 
   const createdAlerts: Alert[] = []
@@ -253,6 +229,11 @@ export const runAlertEngineForPlant = async (plantId: string): Promise<Alert[]> 
       createdAlerts.push(created)
     }
   }
+
+  await alertRepository.resolveOpenByPlantExceptTypes(
+    plantId,
+    candidates.map((candidate) => candidate.type),
+  )
 
   return createdAlerts
 }

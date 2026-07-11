@@ -44,6 +44,37 @@ export interface PairSensorResult {
   measurementId: string
 }
 
+export const deleteSensorAndResolveAlerts = async (sensorId: string): Promise<void> => {
+  await runInTransaction(async (transaction) => {
+    const sensorRows = await transaction.query<SensorRow>(
+      'SELECT id, plant_id, battery_level, last_battery_read_at FROM sensor_devices WHERE id = ? LIMIT 1;',
+      [sensorId],
+    )
+    const plantId = sensorRows[0]?.plant_id ?? null
+    const resolvedAt = new Date().toISOString()
+
+    if (plantId === null) {
+      await transaction.run(
+        'UPDATE alerts SET resolved_at = ? WHERE sensor_id = ? AND resolved_at IS NULL;',
+        [resolvedAt, sensorId],
+      )
+    } else {
+      await transaction.run(
+        `
+        UPDATE alerts
+        SET resolved_at = ?
+        WHERE plant_id = ?
+          AND resolved_at IS NULL
+          AND (sensor_id = ? OR sensor_id IS NULL);
+        `,
+        [resolvedAt, plantId, sensorId],
+      )
+    }
+
+    await transaction.run('DELETE FROM sensor_devices WHERE id = ?;', [sensorId])
+  })
+}
+
 export const persistSensorPairing = async (input: PairSensorInput): Promise<PairSensorResult> => {
   return runInTransaction(async (transaction) => {
     const existingRows = await transaction.query<SensorRow>(
@@ -51,6 +82,11 @@ export const persistSensorPairing = async (input: PairSensorInput): Promise<Pair
       [input.deviceIdentifier],
     )
     const existing = existingRows[0] ?? null
+    const associatedRows = await transaction.query<SensorRow>(
+      'SELECT id, plant_id, battery_level, last_battery_read_at FROM sensor_devices WHERE plant_id = ? LIMIT 1;',
+      [input.plantId],
+    )
+    const previouslyAssociatedSensor = associatedRows[0] ?? null
 
     if (existing?.plant_id && existing.plant_id !== input.plantId) {
       throw new Error('Ce capteur est deja associe a une autre plante.')
@@ -60,6 +96,12 @@ export const persistSensorPairing = async (input: PairSensorInput): Promise<Pair
     const batteryLevel = input.batteryLevel ?? existing?.battery_level ?? null
     const batteryReadAt = input.batteryReadAt ?? existing?.last_battery_read_at ?? null
 
+    if (previouslyAssociatedSensor !== null && previouslyAssociatedSensor.id !== sensorId) {
+      await transaction.run(
+        'UPDATE alerts SET resolved_at = ? WHERE plant_id = ? AND resolved_at IS NULL;',
+        [new Date().toISOString(), input.plantId],
+      )
+    }
     await transaction.run(
       'UPDATE sensor_devices SET plant_id = NULL WHERE plant_id = ? AND id <> ?;',
       [input.plantId, sensorId],

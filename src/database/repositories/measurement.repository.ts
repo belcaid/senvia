@@ -154,6 +154,15 @@ export class MeasurementRepository {
     return rows.length > 0 ? mapMeasurementRow(rows[0]) : null
   }
 
+  async getLatestBySensorId(sensorId: string): Promise<Measurement | null> {
+    const rows = await queryRows<MeasurementRow>(
+      'SELECT * FROM measurements WHERE sensor_id = ? ORDER BY measured_at DESC LIMIT 1;',
+      [sensorId],
+    )
+
+    return rows.length > 0 ? mapMeasurementRow(rows[0]) : null
+  }
+
   async delete(id: string): Promise<void> {
     await runStatement('DELETE FROM measurements WHERE id = ?;', [id])
   }

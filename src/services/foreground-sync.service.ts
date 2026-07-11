@@ -1,6 +1,8 @@
 import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import type { Pinia } from 'pinia'
+import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
+import { notifyForAlerts } from '@/services/notifications.service'
 import { useBleStore } from '@/stores/ble.store'
 import { useSensorsStore } from '@/stores/sensors.store'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -22,22 +24,23 @@ const syncAssociatedPlants = async (pinia: Pinia): Promise<void> => {
 
     await settingsStore.chargerParametres()
 
-    if (!settingsStore.parametres.autoSyncOnForeground) {
-      return
+    if (settingsStore.parametres.autoSyncOnForeground) {
+      await sensorsStore.chargerCapteurs()
+      const plantIds = [
+        ...new Set(
+          sensorsStore.capteurs
+            .map((sensor) => sensor.plantId)
+            .filter((plantId): plantId is string => plantId !== null),
+        ),
+      ]
+
+      for (const plantId of plantIds) {
+        await bleStore.synchroniserPlanteAssociee(plantId, 'foreground_refresh')
+      }
     }
 
-    await sensorsStore.chargerCapteurs()
-    const plantIds = [
-      ...new Set(
-        sensorsStore.capteurs
-          .map((sensor) => sensor.plantId)
-          .filter((plantId): plantId is string => plantId !== null),
-      ),
-    ]
-
-    for (const plantId of plantIds) {
-      await bleStore.synchroniserPlanteAssociee(plantId, 'foreground_refresh')
-    }
+    const createdAlerts = await runAlertEngineForAllPlants()
+    await notifyForAlerts(createdAlerts)
   } catch (error) {
     console.warn('[foreground-sync] synchronization failed:', error)
   } finally {

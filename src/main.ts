@@ -4,6 +4,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
+import { pruneAlertHistory } from '@/services/alert-maintenance.service'
 import { runAlertEngineForAllPlants } from '@/services/alert-engine.service'
 import { ensureDemoData } from '@/services/demo-data.service'
 import { registerForegroundSync } from '@/services/foreground-sync.service'
@@ -50,6 +51,7 @@ router.isReady().then(async () => {
   try {
     await initializeDatabase()
     await ensureDemoData()
+    await pruneAlertHistory()
     await registerForegroundSync(pinia)
     await syncAllPlantStatusesAtStartup()
     const settings = await getAppSettingsPreference()

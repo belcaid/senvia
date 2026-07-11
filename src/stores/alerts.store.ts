@@ -54,5 +54,41 @@ export const useAlertsStore = defineStore('alerts', {
         return null
       }
     },
+    async marquerToutesLues(): Promise<boolean> {
+      this.erreur = null
+
+      try {
+        await alertRepository.markAllAsRead()
+        this.alertes = this.alertes.map((alerte) => ({ ...alerte, isRead: true }))
+        return true
+      } catch (error) {
+        this.erreur = toErrorMessage(error, 'Impossible de marquer toutes les alertes comme lues')
+        return false
+      }
+    },
+    async supprimerHistoriqueLu(): Promise<boolean> {
+      this.erreur = null
+
+      try {
+        await alertRepository.deleteResolvedRead()
+        this.alertes = this.alertes.filter((alerte) => alerte.resolvedAt === null || !alerte.isRead)
+        return true
+      } catch (error) {
+        this.erreur = toErrorMessage(error, "Impossible d'effacer l'historique des alertes")
+        return false
+      }
+    },
+    async supprimerAlerte(id: string): Promise<boolean> {
+      this.erreur = null
+
+      try {
+        await alertRepository.delete(id)
+        this.alertes = this.alertes.filter((alerte) => alerte.id !== id)
+        return true
+      } catch (error) {
+        this.erreur = toErrorMessage(error, "Impossible de supprimer l'alerte")
+        return false
+      }
+    },
   },
 })

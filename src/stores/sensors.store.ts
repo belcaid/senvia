@@ -4,6 +4,7 @@ import {
   type CreateSensorDeviceInput,
   type UpdateSensorDeviceInput,
 } from '@/database'
+import { deleteSensorAndResolveAlerts } from '@/services/sensor-persistence.service'
 import type { SensorDevice } from '@/types/sensor-device.types'
 import { toErrorMessage } from '@/stores/store.utils'
 
@@ -72,7 +73,7 @@ export const useSensorsStore = defineStore('sensors', {
       this.erreur = null
 
       try {
-        await sensorRepository.delete(id)
+        await deleteSensorAndResolveAlerts(id)
         this.capteurs = this.capteurs.filter((item) => item.id !== id)
       } catch (error) {
         this.erreur = toErrorMessage(error, 'Impossible de supprimer le capteur')

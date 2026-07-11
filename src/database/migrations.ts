@@ -32,4 +32,53 @@ export const DATABASE_MIGRATIONS: DatabaseMigration[] = [
     name: 'enforce_sensor_plant_relation',
     statements: [CREATE_SENSOR_RELATION_TRIGGERS_SQL],
   },
+  {
+    version: 3,
+    name: 'track_alert_lifecycle',
+    statements: [
+      'ALTER TABLE alerts ADD COLUMN sensor_id TEXT;',
+      'ALTER TABLE alerts ADD COLUMN last_detected_at TEXT;',
+      'ALTER TABLE alerts ADD COLUMN resolved_at TEXT;',
+      'UPDATE alerts SET last_detected_at = created_at WHERE last_detected_at IS NULL;',
+      `
+      UPDATE alerts
+      SET sensor_id = (
+        SELECT measurements.sensor_id
+        FROM measurements
+        WHERE measurements.id = alerts.measurement_id
+      )
+      WHERE measurement_id IS NOT NULL AND sensor_id IS NULL;
+      `,
+      `
+      UPDATE alerts
+      SET sensor_id = (
+        SELECT sensor_devices.id
+        FROM sensor_devices
+        WHERE sensor_devices.plant_id = alerts.plant_id
+        LIMIT 1
+      )
+      WHERE sensor_id IS NULL;
+      `,
+      `
+      UPDATE alerts
+      SET resolved_at = COALESCE(last_detected_at, created_at)
+      WHERE EXISTS (
+        SELECT 1
+        FROM alerts AS newer
+        WHERE newer.plant_id = alerts.plant_id
+          AND newer.type = alerts.type
+          AND (
+            newer.created_at > alerts.created_at
+            OR (newer.created_at = alerts.created_at AND newer.id > alerts.id)
+          )
+      );
+      `,
+      'CREATE INDEX IF NOT EXISTS idx_alerts_resolution ON alerts(resolved_at, last_detected_at DESC);',
+      `
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_one_open_episode
+      ON alerts(plant_id, type)
+      WHERE resolved_at IS NULL;
+      `,
+    ],
+  },
 ]

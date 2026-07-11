@@ -13,7 +13,7 @@ L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, m
 - favoris ;
 - calcul du statut de santé selon un profil de seuils ;
 - historique local avec graphiques sur 24 h, 7 jours, 30 jours ou toute la période ;
-- alertes locales avec limitation des répétitions ;
+- alertes locales gérées comme des épisodes en cours puis résolus ;
 - notifications locales selon une sévérité minimale ;
 - synchronisation manuelle et au retour de l'application au premier plan ;
 - thème clair ou sombre ;
@@ -94,9 +94,11 @@ Le bouton de réinitialisation des données de démonstration n'est visible qu'e
 
 ## Notifications et synchronisation
 
-Les alertes sont créées à partir des seuils de la plante, de la fraîcheur des données et du niveau de batterie. Le réglage de sévérité minimale s'applique à toutes les alertes.
+Les alertes sont créées à partir des seuils de la plante, de la fraîcheur des données et du niveau de batterie. Un problème persistant met à jour le même épisode au lieu de créer des doublons. Une aggravation repasse l'alerte en non lue et peut déclencher une nouvelle notification.
 
-La synchronisation au retour au premier plan est disponible sur plateforme native. Les capteurs associés sont lus successivement afin d'éviter plusieurs connexions BLE concurrentes.
+Le retrait ou le remplacement d'un capteur résout ses alertes actives sans supprimer l'historique. Les alertes résolues et lues depuis plus de 90 jours sont nettoyées automatiquement. La vue permet aussi de marquer toutes les alertes comme lues et d'effacer manuellement l'historique résolu déjà lu.
+
+Le moteur d'alertes s'exécute au démarrage, après une synchronisation et au retour au premier plan. La synchronisation au retour au premier plan est disponible sur plateforme native. Les capteurs associés sont lus successivement afin d'éviter plusieurs connexions BLE concurrentes. Aucun scan BLE permanent en arrière-plan n'est utilisé dans la V1.
 
 ## Limites V1
 

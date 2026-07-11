@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications, type ActionPerformed } from '@capacitor/local-notifications'
-import { Preferences } from '@capacitor/preferences'
 import { getAppSettingsPreference } from '@/services/preferences.service'
 import type { Alert, AlertSeverity } from '@/types/alert.types'
 import type { AppSettings } from '@/types/app-settings.types'
@@ -8,8 +7,6 @@ import type { Router } from 'vue-router'
 
 const ALERT_CHANNEL_ID = 'senvia-alerts'
 const SYNC_REMINDER_NOTIFICATION_ID = 2_000_000_001
-const NOTIFIED_ALERT_IDS_KEY = 'notified_alert_ids_v1'
-const MAX_STORED_NOTIFIED_ALERT_IDS = 500
 let notificationRoutingRegistered = false
 
 const isAndroid = (): boolean => Capacitor.getPlatform() === 'android'
@@ -100,34 +97,6 @@ const buildAlertNotificationCopy = (alert: Alert): { title: string; body: string
     title: alert.title,
     body: alert.message,
   }
-}
-
-const getNotifiedAlertIds = async (): Promise<string[]> => {
-  const { value } = await Preferences.get({ key: NOTIFIED_ALERT_IDS_KEY })
-
-  if (value === null) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(value) as unknown
-
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    return parsed.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
-  } catch {
-    return []
-  }
-}
-
-const setNotifiedAlertIds = async (ids: string[]): Promise<void> => {
-  const trimmed = ids.slice(-MAX_STORED_NOTIFIED_ALERT_IDS)
-  await Preferences.set({
-    key: NOTIFIED_ALERT_IDS_KEY,
-    value: JSON.stringify(trimmed),
-  })
 }
 
 const ensureAndroidNotificationChannel = async (): Promise<void> => {
@@ -294,15 +263,9 @@ export const notifyForAlerts = async (alerts: Alert[]): Promise<void> => {
 
     await ensureAndroidNotificationChannel()
 
-    const alreadyNotifiedIds = new Set(await getNotifiedAlertIds())
-    const nextNotifiedIds = [...alreadyNotifiedIds]
     const notificationsToSchedule: Parameters<typeof LocalNotifications.schedule>[0]['notifications'] = []
 
     for (const alert of alerts) {
-      if (alreadyNotifiedIds.has(alert.id)) {
-        continue
-      }
-
       if (!shouldNotifyByMinimumSeverity(alert.severity, settings.minimumNotifiedSeverity)) {
         continue
       }
@@ -325,8 +288,6 @@ export const notifyForAlerts = async (alerts: Alert[]): Promise<void> => {
         },
       })
 
-      alreadyNotifiedIds.add(alert.id)
-      nextNotifiedIds.push(alert.id)
     }
 
     if (notificationsToSchedule.length === 0) {
@@ -336,7 +297,6 @@ export const notifyForAlerts = async (alerts: Alert[]): Promise<void> => {
     await LocalNotifications.schedule({
       notifications: notificationsToSchedule,
     })
-    await setNotifiedAlertIds(nextNotifiedIds)
   } catch (error) {
     console.warn('[notifications] unable to send alert notifications:', error)
   }

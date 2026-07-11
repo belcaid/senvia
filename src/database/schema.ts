@@ -1,6 +1,6 @@
 export const DATABASE_NAME = 'senvia'
 export const DATABASE_ENCRYPTION_MODE = 'no-encryption'
-export const DATABASE_VERSION = 2
+export const DATABASE_VERSION = 3
 export const MIGRATIONS_TABLE = 'schema_migrations'
 
 export const PRAGMA_FOREIGN_KEYS = 'PRAGMA foreign_keys = ON;'
