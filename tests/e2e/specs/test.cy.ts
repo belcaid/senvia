@@ -11,17 +11,17 @@ describe('Tabs navigation', () => {
   })
 
   it('opens the favorites and settings tabs', () => {
-    cy.contains('Favoris').click()
+    cy.contains('ion-label', 'Favoris').closest('ion-tab-button').click()
     cy.url().should('include', '/tabs/favoris')
     cy.contains(/favori/i)
 
-    cy.contains('Réglages').click()
+    cy.contains('ion-label', 'Réglages').closest('ion-tab-button').click()
     cy.url().should('include', '/tabs/reglages')
     cy.contains('Personnalisez seulement ce qui compte au quotidien.')
   })
 
   it('shows the alert inbox and explicit bulk actions', () => {
-    cy.contains('Alertes').click()
+    cy.contains('ion-label', 'Alertes').closest('ion-tab-button').click()
     cy.url().should('include', '/tabs/alertes')
     cy.get('.alerts-tabs .alert-tab').should('have.length', 3)
     cy.get('.alerts-controls ion-select').should('not.exist')
