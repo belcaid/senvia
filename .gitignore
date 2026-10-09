@@ -18,6 +18,11 @@ log.txt
 npm-debug.log*
 *.tsbuildinfo
 
+# Local environment files
+.env
+.env.*
+!.env.example
+
 /.idea
 /.ionic
 /.sass-cache
@@ -32,6 +37,7 @@ npm-debug.log*
 /plugins
 /www
 /dev-docs
+/public/assets/sql-wasm.wasm
 
 # Android signing material must never be committed
 *.jks
