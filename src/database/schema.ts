@@ -1,6 +1,6 @@
 export const DATABASE_NAME = 'senvia'
 export const DATABASE_ENCRYPTION_MODE = 'no-encryption'
-export const DATABASE_VERSION = 3
+export const DATABASE_VERSION = 4
 export const MIGRATIONS_TABLE = 'schema_migrations'
 
 export const PRAGMA_FOREIGN_KEYS = 'PRAGMA foreign_keys = ON;'
@@ -103,21 +103,33 @@ CREATE INDEX IF NOT EXISTS idx_alerts_plant_id_created_at ON alerts(plant_id, cr
 CREATE INDEX IF NOT EXISTS idx_alerts_is_read ON alerts(is_read);
 `
 
-export const CREATE_SENSOR_RELATION_TRIGGERS_SQL = `
+export const CREATE_SENSOR_RELATION_AFTER_INSERT_TRIGGER_SQL = `
 CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_insert
 AFTER INSERT ON sensor_devices
 WHEN NEW.plant_id IS NOT NULL
 BEGIN
   UPDATE plants SET sensor_id = NEW.id WHERE id = NEW.plant_id;
 END;
+`
 
-CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_update
+export const CREATE_SENSOR_RELATION_AFTER_UPDATE_CLEANUP_TRIGGER_SQL = `
+CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_update_cleanup
 AFTER UPDATE OF plant_id ON sensor_devices
 BEGIN
   UPDATE plants SET sensor_id = NULL WHERE sensor_id = NEW.id AND id IS NOT NEW.plant_id;
+END;
+`
+
+export const CREATE_SENSOR_RELATION_AFTER_UPDATE_ASSIGN_TRIGGER_SQL = `
+CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_update_assign
+AFTER UPDATE OF plant_id ON sensor_devices
+WHEN NEW.plant_id IS NOT NULL
+BEGIN
   UPDATE plants SET sensor_id = NEW.id WHERE id = NEW.plant_id;
 END;
+`
 
+export const CREATE_SENSOR_RELATION_AFTER_DELETE_TRIGGER_SQL = `
 CREATE TRIGGER IF NOT EXISTS trg_sensor_relation_after_delete
 AFTER DELETE ON sensor_devices
 BEGIN
