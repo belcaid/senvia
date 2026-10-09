@@ -1,4 +1,4 @@
-import { defineConfig } from 'cypress';
+import { defineConfig } from 'cypress'
 
 export default defineConfig({
   e2e: {
@@ -7,9 +7,5 @@ export default defineConfig({
     videosFolder: 'tests/e2e/videos',
     screenshotsFolder: 'tests/e2e/screenshots',
     baseUrl: 'http://127.0.0.1:5173',
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
-    },
   },
-});
+})
