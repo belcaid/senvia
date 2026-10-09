@@ -9,7 +9,7 @@ const thresholdProfileRepository = new ThresholdProfileRepository()
 const DEFAULT_THRESHOLD_PROFILES: CreateThresholdProfileInput[] = [
   {
     id: 'profile-indoor-standard',
-    name: 'Interieur standard',
+    name: 'Intérieur standard',
     tempMin: 18,
     tempMax: 27,
     moistureMin: 25,

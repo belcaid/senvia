@@ -50,10 +50,10 @@ interface EvaluatePlantHealthOptions {
 }
 
 const METRICS: MetricDefinition[] = [
-  { key: 'temperature', label: 'Temperature', unit: 'C' },
-  { key: 'moisture', label: 'Humidite', unit: '%' },
-  { key: 'light', label: 'Lumiere', unit: 'lx' },
-  { key: 'conductivity', label: 'Fertilite', unit: 'uS/cm' },
+  { key: 'temperature', label: 'Température', unit: '°C' },
+  { key: 'moisture', label: 'Humidité', unit: '%' },
+  { key: 'light', label: 'Lumière', unit: 'lx' },
+  { key: 'conductivity', label: 'Fertilité', unit: 'µS/cm' },
 ]
 
 const DEFAULT_WEIGHTS: ThresholdWeights = {
@@ -211,7 +211,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
       score: 100,
       issues: [],
       dominantIssue: null,
-      explanation: `Donnees obsoletes: la derniere mesure depasse le seuil de fraicheur (${staleThreshold} min).`,
+      explanation: `Données obsolètes : la dernière mesure dépasse le seuil de fraîcheur (${staleThreshold} min).`,
     }
   }
 

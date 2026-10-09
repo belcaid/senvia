@@ -9,7 +9,7 @@ export const getPlantStatusLabel = (status: PlantStatus): string => {
     case 'critical':
       return 'Critique'
     case 'stale_data':
-      return 'Donnees anciennes'
+      return 'Données anciennes'
     case 'unknown':
     default:
       return 'Inconnu'

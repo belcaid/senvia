@@ -38,7 +38,7 @@ const buildIssueAlert = (
   const roundedValue = Math.round(issue.value)
   const roundedMin = Math.round(issue.min)
   const roundedMax = Math.round(issue.max)
-  const directionText = issue.direction === 'low' ? 'basse' : 'elevee'
+  const directionText = issue.direction === 'low' ? 'basse' : 'élevée'
 
   if (issue.key === 'moisture') {
     return {
@@ -46,8 +46,8 @@ const buildIssueAlert = (
       sensorId,
       type: issue.direction === 'low' ? 'humidity_low' : 'humidity_high',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
-      title: `Humidite ${directionText}`,
-      message: `Humidite du sol ${directionText}: ${roundedValue}% (cible ${roundedMin}-${roundedMax}%).`,
+      title: `Humidité ${directionText}`,
+      message: `Humidité du sol ${directionText} : ${roundedValue} % (cible ${roundedMin}–${roundedMax} %).`,
       measurementId,
     }
   }
@@ -58,8 +58,8 @@ const buildIssueAlert = (
       sensorId,
       type: 'temperature_out_of_range',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
-      title: 'Temperature hors plage',
-      message: `Temperature ${directionText}: ${issue.value.toFixed(1)} C (cible ${issue.min.toFixed(1)}-${issue.max.toFixed(1)} C).`,
+      title: 'Température hors plage',
+      message: `Température ${directionText} : ${issue.value.toFixed(1)} °C (cible ${issue.min.toFixed(1)}–${issue.max.toFixed(1)} °C).`,
       measurementId,
     }
   }
@@ -70,8 +70,8 @@ const buildIssueAlert = (
       sensorId,
       type: issue.direction === 'low' ? 'light_low' : 'light_high',
       severity: issue.status === 'critical' ? 'critical' : 'warning',
-      title: `Lumiere ${directionText}`,
-      message: `Luminosite ${directionText}: ${roundedValue} lx (cible ${roundedMin}-${roundedMax} lx).`,
+      title: `Lumière ${directionText}`,
+      message: `Luminosité ${directionText} : ${roundedValue} lx (cible ${roundedMin}–${roundedMax} lx).`,
       measurementId,
     }
   }
@@ -81,8 +81,8 @@ const buildIssueAlert = (
     sensorId,
     type: issue.direction === 'low' ? 'conductivity_low' : 'conductivity_high',
     severity: issue.status === 'critical' ? 'critical' : 'warning',
-    title: `Fertilite ${directionText}`,
-    message: `Conductivite ${directionText}: ${roundedValue} uS/cm (cible ${roundedMin}-${roundedMax} uS/cm).`,
+    title: `Fertilité ${directionText}`,
+    message: `Conductivité ${directionText} : ${roundedValue} µS/cm (cible ${roundedMin}–${roundedMax} µS/cm).`,
     measurementId,
   }
 }
@@ -98,7 +98,7 @@ const buildStaleAlert = (
       sensorId,
       type: 'stale_data',
       severity: 'warning',
-      title: 'Donnees obsoletes',
+      title: 'Données obsolètes',
       message: 'Aucune mesure disponible pour cette plante.',
       measurementId: null,
     }
@@ -109,8 +109,8 @@ const buildStaleAlert = (
     sensorId,
     type: 'stale_data',
     severity: 'warning',
-    title: 'Donnees obsoletes',
-    message: `La derniere mesure depasse le seuil de fraicheur (${options.staleThresholdMinutes} min).`,
+    title: 'Données obsolètes',
+    message: `La dernière mesure dépasse le seuil de fraîcheur (${options.staleThresholdMinutes} min).`,
     measurementId: null,
   }
 }
