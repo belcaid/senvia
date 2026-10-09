@@ -86,9 +86,9 @@ jobs:
       - name: Synchronize Android project
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Lint and build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew lintDebug assembleDebug --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
