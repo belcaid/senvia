@@ -1,5 +1,4 @@
 import { createApp } from 'vue'
-import { Capacitor } from '@capacitor/core'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
@@ -46,9 +45,10 @@ const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
 router.isReady().then(async () => {
   await themeStore.init()
-  await registerNotificationDeepLinks(router)
+  app.mount('#app')
 
   try {
+    await registerNotificationDeepLinks(router)
     await initializeDatabase()
     await ensureDemoData()
     await pruneAlertHistory()
@@ -56,7 +56,7 @@ router.isReady().then(async () => {
     await syncAllPlantStatusesAtStartup()
     const settings = await getAppSettingsPreference()
     await syncNotificationPreferences(settings, {
-      requestPermission: Capacitor.getPlatform() === 'android',
+      requestPermission: false,
     })
     const createdAlerts = await runAlertEngineForAllPlants()
     await notifyForAlerts(createdAlerts)
@@ -64,5 +64,4 @@ router.isReady().then(async () => {
     console.warn('[database] initialization failed:', error)
   }
 
-  app.mount('#app')
 })
