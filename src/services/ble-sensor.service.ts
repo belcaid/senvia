@@ -387,6 +387,18 @@ const getStringValue = (error: unknown): string => {
   return String(error)
 }
 
+export const isBleRequestCancelled = (error: unknown): boolean => {
+  const name = error instanceof Error ? error.name.toLowerCase() : ''
+  const message = getStringValue(error).toLowerCase()
+
+  return (
+    message.includes('user cancelled') ||
+    message.includes('user canceled') ||
+    message.includes('requestdevice() chooser') ||
+    (name === 'notfounderror' && message.includes('cancel'))
+  )
+}
+
 const inferCodeFromMessage = (message: string): BleErrorCode => {
   const normalized = message.toLowerCase()
 
@@ -396,6 +408,15 @@ const inferCodeFromMessage = (message: string): BleErrorCode => {
 
   if (normalized.includes('not found')) {
     return 'sensor_not_found'
+  }
+
+  if (
+    normalized.includes('connect') ||
+    normalized.includes('gatt') ||
+    normalized.includes('peripheral') ||
+    normalized.includes('disconnected')
+  ) {
+    return 'connection_failed'
   }
 
   if (normalized.includes('timeout')) {
@@ -444,7 +465,9 @@ export const toBleApplicationError = (error: unknown, fallbackCode: BleErrorCode
 export const getBleDefaultErrorMessage = (code: BleErrorCode): string => {
   switch (code) {
     case 'sensor_not_found':
-      return 'Capteur introuvable. Relancez un scan BLE.'
+      return 'Capteur introuvable. Ouvrez la gestion du capteur pour le rechercher à nouveau.'
+    case 'connection_failed':
+      return 'Impossible de joindre le capteur. Rapprochez le téléphone et vérifiez que le capteur est disponible.'
     case 'bluetooth_disabled':
       return 'Bluetooth desactive. Activez le Bluetooth pour continuer.'
     case 'permissions_denied':

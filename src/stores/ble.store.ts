@@ -10,6 +10,7 @@ import {
   BLE_OPTIONAL_SERVICE_UUIDS,
   BleApplicationError,
   getBleDefaultErrorMessage,
+  isBleRequestCancelled,
   isWebBluetoothSupported,
   readBleMeasurementSnapshot,
   toBleApplicationError,
@@ -49,6 +50,7 @@ interface BleState {
   dernieresMesuresTest: BleMeasurementSnapshot | null
   codeErreur: BleErrorCode | null
   erreur: string | null
+  interactionAnnulee: boolean
 }
 
 const DEFAULT_SCAN_OPTIONS: RequestBleDeviceOptions = {
@@ -101,6 +103,11 @@ const ensureString = (value: unknown): string => {
   return String(value)
 }
 
+const wait = (durationMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, durationMs)
+  })
+
 export const useBleStore = defineStore('ble', {
   state: (): BleState => ({
     estInitialise: false,
@@ -113,6 +120,7 @@ export const useBleStore = defineStore('ble', {
     dernieresMesuresTest: null,
     codeErreur: null,
     erreur: null,
+    interactionAnnulee: false,
   }),
   getters: {
     estConnecte(state): boolean {
@@ -133,6 +141,13 @@ export const useBleStore = defineStore('ble', {
     effacerErreur(): void {
       this.codeErreur = null
       this.erreur = null
+      this.interactionAnnulee = false
+    },
+    signalerAnnulationUtilisateur(): void {
+      this.codeErreur = null
+      this.erreur = null
+      this.interactionAnnulee = true
+      this.mettreAJourEtatMetier()
     },
     definirErreur(code: BleErrorCode, message?: string): void {
       this.codeErreur = code
@@ -140,6 +155,12 @@ export const useBleStore = defineStore('ble', {
       this.etat = 'erreur'
     },
     appliquerErreur(error: unknown, fallbackCode: BleErrorCode = 'unknown'): void {
+      if (isBleRequestCancelled(error)) {
+        this.signalerAnnulationUtilisateur()
+        return
+      }
+
+      const isApplicationError = error instanceof BleApplicationError
       const bleError = toBleApplicationError(error, fallbackCode)
 
       if (bleError.code === 'unknown') {
@@ -150,7 +171,7 @@ export const useBleStore = defineStore('ble', {
       const detail = ensureString(bleError.message).trim()
       const defaultMessage = getBleDefaultErrorMessage(bleError.code)
 
-      if (detail !== '' && detail !== defaultMessage) {
+      if (isApplicationError && detail !== '' && detail !== defaultMessage) {
         this.definirErreur(bleError.code, detail)
         return
       }
@@ -353,6 +374,10 @@ export const useBleStore = defineStore('ble', {
           })
       } catch (error) {
         this.estScanEnCours = false
+        if (isBleRequestCancelled(error)) {
+          this.signalerAnnulationUtilisateur()
+          return
+        }
         this.appliquerErreur(error, 'unknown')
       } finally {
         this.mettreAJourEtatMetier()
@@ -408,8 +433,106 @@ export const useBleStore = defineStore('ble', {
         })
         this.capteurConnecteId = normalizedDeviceId
       } catch (error) {
-        this.appliquerErreur(error, 'sensor_not_found')
+        this.appliquerErreur(error, 'unknown')
       } finally {
+        this.mettreAJourEtatMetier()
+      }
+    },
+    async retrouverCapteurConnu(deviceId: string, timeoutMs = 4500): Promise<boolean> {
+      const normalizedDeviceId = deviceId.trim()
+
+      if (normalizedDeviceId === '') {
+        return false
+      }
+
+      this.effacerErreur()
+
+      try {
+        if (!this.estInitialise) {
+          await this.initialiser()
+        }
+
+        if (!this.estInitialise || !this.bluetoothActif) {
+          return false
+        }
+
+        if (platform === 'android' && this.localisationActive === false) {
+          throw new BleApplicationError('permissions_denied', getBleDefaultErrorMessage('permissions_denied'))
+        }
+
+        if (platform === 'web' && !isWebRequestLeScanSupported()) {
+          const device = await BleClient.requestDevice(DEFAULT_SCAN_OPTIONS)
+          const mapped = this.mapBleDevice(device)
+
+          if (mapped === null) {
+            return false
+          }
+
+          const existingIndex = this.capteursDetectes.findIndex((item) => item.deviceId === mapped.deviceId)
+
+          if (existingIndex === -1) {
+            this.capteursDetectes = [mapped, ...this.capteursDetectes]
+          } else {
+            const next = [...this.capteursDetectes]
+            next[existingIndex] = mapped
+            this.capteursDetectes = next
+          }
+
+          return mapped.deviceId === normalizedDeviceId
+        }
+
+        let found = false
+        let resolveDetection: () => void = () => {}
+        const detection = new Promise<void>((resolve) => {
+          resolveDetection = resolve
+        })
+
+        this.estScanEnCours = true
+        this.mettreAJourEtatMetier()
+
+        await BleClient.requestLEScan(DEFAULT_SCAN_OPTIONS, (result) => {
+          const mapped = this.mapScanResult(result)
+
+          if (mapped === null) {
+            return
+          }
+
+          const existingIndex = this.capteursDetectes.findIndex((item) => item.deviceId === mapped.deviceId)
+
+          if (existingIndex === -1) {
+            this.capteursDetectes = [mapped, ...this.capteursDetectes]
+          } else {
+            const next = [...this.capteursDetectes]
+            next[existingIndex] = mapped
+            this.capteursDetectes = next
+          }
+
+          if (mapped.deviceId === normalizedDeviceId) {
+            found = true
+            resolveDetection()
+          }
+        })
+
+        await Promise.race([detection, wait(timeoutMs)])
+        return found
+      } catch (error) {
+        if (isBleRequestCancelled(error)) {
+          this.signalerAnnulationUtilisateur()
+          return false
+        }
+
+        this.appliquerErreur(error, 'unknown')
+        return false
+      } finally {
+        if (this.estScanEnCours) {
+          try {
+            await BleClient.stopLEScan()
+          } catch {
+            // The scan may already have been stopped by the native layer.
+          }
+        }
+
+        this.estScanEnCours = false
         this.mettreAJourEtatMetier()
       }
     },
@@ -460,6 +583,10 @@ export const useBleStore = defineStore('ble', {
         await this.connecter(deviceId)
 
         if (this.capteurConnecteId !== deviceId) {
+          if (this.codeErreur !== null) {
+            return null
+          }
+
           throw new BleApplicationError('sensor_not_found', getBleDefaultErrorMessage('sensor_not_found'))
         }
 
@@ -574,9 +701,26 @@ export const useBleStore = defineStore('ble', {
         }
 
         deviceIdentifier = capteur.deviceIdentifier
-        const snapshot = await this.testerConnexionEtLireMesures(deviceIdentifier, {
+        let snapshot = await this.testerConnexionEtLireMesures(deviceIdentifier, {
           forceBatteryRead: false,
         })
+
+        if (
+          snapshot === null &&
+          (this.codeErreur === 'sensor_not_found' || this.codeErreur === 'connection_failed')
+        ) {
+          const rediscovered = await this.retrouverCapteurConnu(deviceIdentifier)
+
+          if (rediscovered) {
+            snapshot = await this.testerConnexionEtLireMesures(deviceIdentifier, {
+              forceBatteryRead: false,
+            })
+          } else if (this.interactionAnnulee) {
+            return null
+          } else if (this.codeErreur === null) {
+            this.definirErreur('connection_failed')
+          }
+        }
 
         if (snapshot === null) {
           return null

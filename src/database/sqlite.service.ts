@@ -137,6 +137,18 @@ const applyMigration = async (db: SQLiteDBConnection, version: number, name: str
   )
 }
 
+const rollbackIfActive = async (db: SQLiteDBConnection): Promise<void> => {
+  try {
+    const transactionState = await db.isTransactionActive()
+
+    if (transactionState.result) {
+      await db.rollbackTransaction()
+    }
+  } catch (rollbackError) {
+    console.warn('[database] unable to rollback active transaction:', rollbackError)
+  }
+}
+
 const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
   await db.execute(CREATE_MIGRATIONS_TABLE_SQL, false)
 
@@ -156,7 +168,7 @@ const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
       await db.commitTransaction()
       currentVersion = migration.version
     } catch (error) {
-      await db.rollbackTransaction()
+      await rollbackIfActive(db)
       throw error
     }
   }
@@ -247,7 +259,10 @@ export const runInTransaction = async <T>(
         return (result.values ?? []) as TRow[]
       },
       run(statement: string, values: unknown[] = []): Promise<capSQLiteChanges> {
-        return db.run(statement, values)
+        // The surrounding transaction is managed explicitly. Passing `true`
+        // here would make the plugin start/finish a nested transaction and
+        // leave nothing active for our final commit or rollback.
+        return db.run(statement, values, false)
       },
     }
 
@@ -257,7 +272,7 @@ export const runInTransaction = async <T>(
       await persistWebStoreIfNeeded()
       return result
     } catch (error) {
-      await db.rollbackTransaction()
+      await rollbackIfActive(db)
       throw error
     }
   })

@@ -2,6 +2,7 @@ export type BleStateStatus = 'pret' | 'desactive' | 'indisponible' | 'en_scan' |
 
 export type BleErrorCode =
   | 'sensor_not_found'
+  | 'connection_failed'
   | 'bluetooth_disabled'
   | 'permissions_denied'
   | 'timeout'
