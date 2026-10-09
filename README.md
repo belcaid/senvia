@@ -16,7 +16,7 @@ L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, m
 - alertes locales gérées comme des épisodes en cours puis résolus ;
 - notifications locales selon une sévérité minimale ;
 - synchronisation manuelle et au retour de l'application au premier plan ;
-- thème clair ou sombre ;
+- identité visuelle sombre, optimisée pour téléphone et tablette ;
 - fonctionnement hors ligne et sans compte.
 
 ## Stack
@@ -76,6 +76,20 @@ npx cap open android
 
 Le dossier `android/` fait partie du projet et doit être versionné. Les permissions BLE et notifications sont déclarées dans `android/app/src/main/AndroidManifest.xml`.
 
+Les données locales ne sont pas incluses dans les sauvegardes Android : la base SQLite contient l’historique des plantes et n’est pas chiffrée. Une désinstallation efface donc les plantes, mesures et alertes enregistrées.
+
+### Signer l’APK installé manuellement
+
+Le nom affiché dans l’application est `Mehdi (belcaid)`. L’identité technique d’un APK Android provient toutefois de son certificat de signature. Créez une seule clé release, conservez-la en lieu sûr et réutilisez-la pour toutes les versions :
+
+```bash
+cd android
+keytool -genkeypair -v -keystore senvia-release.jks -alias senvia -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Mehdi (belcaid), O=Senvia"
+cp keystore.properties.example keystore.properties
+```
+
+Renseignez ensuite les mots de passe dans `keystore.properties`, puis construisez l’APK release depuis Android Studio ou avec `./gradlew assembleRelease`. La clé et le fichier contenant les mots de passe sont exclus de Git. Une clé auto-signée rend les mises à jour cohérentes, mais ne donne pas à l’application la réputation d’une publication Google Play.
+
 ## Stockage et architecture
 
 - `src/database/` : schéma, migrations, connexion SQLite et repositories ;
@@ -106,3 +120,7 @@ Le moteur d'alertes s'exécute au démarrage, après une synchronisation et au r
 - aucune prise en charge iOS validée dans le dépôt ;
 - compatibilité à confirmer sur chaque variante matérielle Flower Care / HHCC ;
 - les tests automatisés ne remplacent pas les essais BLE et notifications sur appareil réel.
+
+## Projet
+
+Senvia est développé par Mehdi (`belcaid`) et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation.

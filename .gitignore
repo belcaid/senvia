@@ -32,3 +32,8 @@ npm-debug.log*
 /plugins
 /www
 /dev-docs
+
+# Android signing material must never be committed
+*.jks
+*.keystore
+keystore.properties
