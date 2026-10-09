@@ -43,7 +43,7 @@ L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, m
 
 ## Prérequis
 
-- Node.js 20 ou version LTS plus récente ;
+- Node.js 22.12 ou version LTS plus récente ;
 - npm ;
 - Android Studio et le SDK Android pour une compilation native ;
 - JDK 21, requis par Capacitor 8 ;
