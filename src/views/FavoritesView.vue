@@ -1,12 +1,11 @@
 <template>
   <ion-page class="favorites-page">
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Favoris</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <section class="senvia-page-heading senvia-reveal">
+        <h1>Mes favoris</h1>
+        <p>{{ favorisSubtitle }}</p>
+      </section>
+
       <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
       <ion-note v-if="measurementsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ measurementsStore.erreur }}
@@ -14,10 +13,6 @@
       <ion-note v-if="settingsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ settingsStore.erreur }}</ion-note>
       <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
-      </ion-note>
-
-      <ion-note class="senvia-results-count senvia-reveal" color="medium">
-        {{ favoris.length }} favori{{ favoris.length > 1 ? 's' : '' }}
       </ion-note>
 
       <div v-if="plantsStore.estChargement" class="senvia-loading-container senvia-reveal">
@@ -57,12 +52,9 @@ import { computed } from 'vue'
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonNote,
   IonPage,
   IonSpinner,
-  IonTitle,
-  IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { useRouter } from 'vue-router'
@@ -85,6 +77,9 @@ const settingsStore = useSettingsStore()
 const thresholdProfilesStore = useThresholdProfilesStore()
 
 const favoris = computed(() => plantsStore.favoris)
+const favorisSubtitle = computed(() => favoris.value.length === 0
+  ? 'Retrouvez ici les plantes que vous souhaitez suivre en priorité.'
+  : `${favoris.value.length} plante${favoris.value.length > 1 ? 's' : ''} suivie${favoris.value.length > 1 ? 's' : ''} en priorité.`)
 const statusByPlantId = computed<Record<string, PlantStatus>>(() => {
   const staleThreshold = settingsStore.parametres.staleDataThresholdMinutes
 

@@ -1,155 +1,112 @@
 <template>
   <ion-page class="alerts-page">
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Alertes</ion-title>
-        <ion-buttons slot="end">
-          <ion-button
-            v-if="nombreNonLues > 0"
-            fill="clear"
-            size="small"
-            class="alerts-mark-read-btn"
-            @click="marquerToutesLues"
-          >
-            Tout lire
-          </ion-button>
-          <ion-button
-            v-if="nombreHistoriqueEffacable > 0"
-            fill="clear"
-            size="small"
-            class="alerts-clear-btn"
-            @click="confirmerSuppressionHistorique"
-          >
-            Effacer lu
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
-      <div class="alerts-filters senvia-reveal">
-        <button
-          v-for="filtre in filtresCycle"
-          :key="filtre.value"
-          type="button"
-          class="alerts-chip"
-          :class="{ 'alerts-chip--active': cycleSelectionne === filtre.value }"
-          :aria-pressed="cycleSelectionne === filtre.value"
-          @click="cycleSelectionne = filtre.value"
-        >
-          {{ filtre.label }}
-          <span class="alerts-chip__count">{{ filtre.count }}</span>
-        </button>
+      <section class="senvia-page-heading alerts-heading senvia-reveal">
+        <h1>Alertes</h1>
+        <p>Les informations importantes, classées par priorité.</p>
+      </section>
+
+      <section class="alerts-hero senvia-reveal" :class="{ 'alerts-hero--clear': nombreNouvelles === 0 }">
+        <div class="alerts-hero__icon">
+          <ion-icon :icon="nombreNouvelles === 0 ? checkmarkCircleOutline : notificationsOutline" />
+        </div>
+        <div class="alerts-hero__copy">
+          <span>État de vos plantes</span>
+          <h1>{{ heroTitle }}</h1>
+          <p>{{ heroSubtitle }}</p>
+        </div>
+        <ion-button v-if="nombreNouvelles > 0" fill="clear" size="small" @click="marquerToutesLues">
+          Tout marquer comme vu
+        </ion-button>
+      </section>
+
+      <div class="alerts-controls senvia-reveal">
+        <div class="alerts-tabs" role="tablist" aria-label="Afficher les alertes">
+          <button
+            type="button"
+            role="tab"
+            class="alert-tab"
+            :class="{ 'alert-tab--active': vueSelectionnee === 'new' }"
+            :aria-selected="vueSelectionnee === 'new'"
+            @click="vueSelectionnee = 'new'"
+          >
+            <span>Nouvelles</span>
+            <strong>{{ nombreNouvelles }}</strong>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="alert-tab"
+            :class="{ 'alert-tab--active': vueSelectionnee === 'followed' }"
+            :aria-selected="vueSelectionnee === 'followed'"
+            @click="vueSelectionnee = 'followed'"
+          >
+            <span>Suivies</span>
+            <strong>{{ nombreSuivies }}</strong>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="alert-tab"
+            :class="{ 'alert-tab--active': vueSelectionnee === 'history' }"
+            :aria-selected="vueSelectionnee === 'history'"
+            @click="vueSelectionnee = 'history'"
+          >
+            <span>Historique</span>
+            <strong>{{ nombreResolues }}</strong>
+          </button>
+        </div>
       </div>
 
-      <div v-if="filtresSeveriteVisibles.length > 1" class="alerts-filters alerts-filters--sub senvia-reveal">
-        <button
-          v-for="filtre in filtresSeveriteVisibles"
-          :key="filtre.value"
-          type="button"
-          class="alerts-chip alerts-chip--sm"
-          :class="{ 'alerts-chip--active': severiteSelectionnee === filtre.value }"
-          :aria-pressed="severiteSelectionnee === filtre.value"
-          @click="severiteSelectionnee = filtre.value"
-        >
-          <span
-            v-if="filtre.value !== 'all'"
-            class="alerts-chip__dot"
-            :class="`alerts-chip__dot--${filtre.value}`"
-          />
-          {{ filtre.label }}
-          <span class="alerts-chip__count">{{ filtre.count }}</span>
-        </button>
+      <ion-note v-if="alertsStore.erreur" class="senvia-feedback" color="danger">{{ alertsStore.erreur }}</ion-note>
+      <div v-if="alertsStore.estChargement" class="senvia-loading-container">
+        <ion-spinner name="crescent" /><span>Chargement des alertes…</span>
       </div>
 
-      <ion-note v-if="alertsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
-        {{ alertsStore.erreur }}
-      </ion-note>
-
-      <div v-if="alertsStore.estChargement" class="senvia-loading-container senvia-reveal">
-        <ion-spinner name="crescent" />
-        <span>Chargement des alertes...</span>
-      </div>
-
-      <ion-list v-else-if="alertesFiltrees.length > 0" class="alerts-list senvia-reveal">
-        <ion-item-sliding
+      <div v-else-if="alertesFiltrees.length > 0" class="alerts-list senvia-reveal">
+        <article
           v-for="alerte in alertesFiltrees"
           :key="alerte.id"
-          :ref="(el: unknown) => setSliderRef(alerte.id, el)"
+          class="alert-card"
+          :class="[`alert-card--${alerte.severity}`, { 'alert-card--unread': !alerte.isRead }]"
         >
-          <ion-item
-            button
-            detail
-            :class="{
-              'alert-item--unread': !alerte.isRead,
-              'alert-item--resolved': alerte.resolvedAt !== null,
-            }"
-            lines="none"
-            @click="ouvrirAlerte(alerte)"
-          >
-            <ion-icon
-              slot="start"
-              class="alert-severity-icon"
-              :class="`alert-severity-icon--${alerte.severity}`"
-              :icon="getSeverityIcon(alerte.severity)"
-            />
-
-            <ion-label>
-              <div class="alert-title-row">
-                <div class="alert-title-row__left">
-                  <span v-if="!alerte.isRead" class="alert-unread-dot" aria-label="Non lue" />
-                  <h2>{{ alerte.title }}</h2>
-                </div>
-                <ion-chip :color="getSeverityColor(alerte.severity)" class="alert-severity-chip">
-                  <ion-label>{{ getSeverityLabel(alerte.severity) }}</ion-label>
-                </ion-chip>
-              </div>
-
-              <p class="alert-message">{{ alerte.message }}</p>
-              <p class="alert-meta">
-                {{ getPlantName(alerte.plantId) }} · {{ formatDateTime(alerte.createdAt) }}
-              </p>
-              <p v-if="alerte.resolvedAt" class="alert-meta">
-                Resolue {{ formatDateTime(alerte.resolvedAt) }}
-              </p>
-            </ion-label>
-          </ion-item>
-
-          <ion-item-options side="end">
-            <ion-item-option
-              v-if="!alerte.isRead"
-              color="primary"
-              @click="marquerLue(alerte)"
-            >
-              <ion-icon slot="icon-only" :icon="checkmarkOutline" />
-            </ion-item-option>
-            <ion-item-option
-              color="danger"
-              @click="supprimerAlerte(alerte)"
-            >
-              <ion-icon slot="icon-only" :icon="trashOutline" />
-            </ion-item-option>
-          </ion-item-options>
-        </ion-item-sliding>
-      </ion-list>
+          <button type="button" class="alert-card__main" @click="ouvrirAlerte(alerte)">
+            <span class="alert-card__icon"><ion-icon :icon="getSeverityIcon(alerte.severity)" /></span>
+            <span class="alert-card__body">
+              <span class="alert-card__topline">
+                <strong>{{ corrigerTypographie(alerte.title) }}</strong>
+                <span class="alert-card__severity">{{ getSeverityLabel(alerte.severity) }}</span>
+              </span>
+              <span class="alert-card__message">{{ corrigerTypographie(alerte.message) }}</span>
+              <span class="alert-card__meta">{{ getPlantName(alerte.plantId) }} · {{ formatDateTime(alerte.createdAt) }}</span>
+            </span>
+            <ion-icon class="alert-card__chevron" :icon="chevronForwardOutline" />
+          </button>
+          <div v-if="!alerte.isRead || alerte.resolvedAt" class="alert-card__actions">
+            <button v-if="!alerte.isRead" type="button" @click="marquerLue(alerte)">J’ai vu</button>
+            <button v-if="alerte.resolvedAt" type="button" class="danger" @click="supprimerAlerte(alerte)">Supprimer</button>
+          </div>
+        </article>
+      </div>
 
       <screen-placeholder
-        class="senvia-reveal"
         v-else
-        :title="cycleSelectionne === 'active' ? 'Aucune alerte en cours' : 'Historique vide'"
-        :subtitle="severiteSelectionnee === 'all' ? 'Tout est en ordre' : 'Aucune alerte pour cette severite'"
-        description="Les alertes sont mises a jour au demarrage, apres synchronisation et au retour dans l'application."
+        class="alerts-empty senvia-reveal"
+        :title="emptyState.title"
+        :subtitle="emptyState.subtitle"
+        description="Les alertes sont actualisées après chaque synchronisation."
+      />
+
+      <ion-button
+        v-if="vueSelectionnee === 'history' && nombreHistoriqueEffacable > 0"
+        class="clear-history"
+        fill="clear"
+        color="danger"
+        expand="block"
+        @click="confirmerSuppressionHistorique"
       >
-        <template #actions>
-          <ion-button
-            v-if="severiteSelectionnee !== 'all'"
-            fill="outline"
-            @click="severiteSelectionnee = 'all'"
-          >
-            Afficher toutes les severites
-          </ion-button>
-        </template>
-      </screen-placeholder>
+        Effacer les alertes terminées et lues
+      </ion-button>
     </ion-content>
   </ion-page>
 </template>
@@ -157,31 +114,21 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import {
+  alertController,
   IonButton,
-  IonButtons,
-  IonChip,
   IonContent,
-  IonHeader,
   IonIcon,
-  IonItem,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
-  IonLabel,
-  IonList,
   IonNote,
   IonPage,
   IonSpinner,
-  IonTitle,
-  IonToolbar,
-  alertController,
   onIonViewWillEnter,
 } from '@ionic/vue'
 import {
   alertCircleOutline,
-  checkmarkOutline,
+  checkmarkCircleOutline,
+  chevronForwardOutline,
   informationCircleOutline,
-  trashOutline,
+  notificationsOutline,
   warningOutline,
 } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
@@ -193,398 +140,128 @@ import { usePlantsStore } from '@/stores/plants.store'
 import type { Alert, AlertSeverity } from '@/types/alert.types'
 import { formatDateTime } from '@/utils/date.util'
 
-type AlertCycleFilter = 'active' | 'resolved'
-type SeveriteFilter = AlertSeverity | 'all'
-
+type AlertView = 'new' | 'followed' | 'history'
 const router = useRouter()
 const alertsStore = useAlertsStore()
 const plantsStore = usePlantsStore()
+const vueSelectionnee = ref<AlertView>('new')
 
-const cycleSelectionne = ref<AlertCycleFilter>('active')
-const severiteSelectionnee = ref<SeveriteFilter>('all')
-
-const sliderRefs = new Map<string, InstanceType<typeof IonItemSliding> | null>()
-
-const setSliderRef = (id: string, el: unknown): void => {
-  sliderRefs.set(id, (el as InstanceType<typeof IonItemSliding>) ?? null)
-}
-
-const nombreActives = computed(
-  () => alertsStore.alertes.filter((alerte) => alerte.resolvedAt === null).length,
-)
-const nombreResolues = computed(
-  () => alertsStore.alertes.filter((alerte) => alerte.resolvedAt !== null).length,
-)
-const nombreNonLues = computed(
-  () => alertsStore.alertes.filter((alerte) => !alerte.isRead).length,
-)
-const nombreHistoriqueEffacable = computed(
-  () => alertsStore.alertes.filter((alerte) => alerte.resolvedAt !== null && alerte.isRead).length,
-)
-
-const filtresCycle = computed(() => [
-  { value: 'active' as AlertCycleFilter, label: 'En cours', count: nombreActives.value },
-  { value: 'resolved' as AlertCycleFilter, label: 'Historique', count: nombreResolues.value },
-])
-
-const alertesDuCycle = computed(() =>
-  alertsStore.alertes.filter((alerte) =>
-    cycleSelectionne.value === 'active' ? alerte.resolvedAt === null : alerte.resolvedAt !== null,
-  ),
-)
-
-const filtresSeveriteVisibles = computed<Array<{ value: SeveriteFilter; label: string; count: number }>>(() => {
-  const filters: Array<{ value: SeveriteFilter; label: string; count: number }> = [
-    { value: 'all', label: 'Toutes', count: alertesDuCycle.value.length },
-    {
-      value: 'critical',
-      label: 'Critiques',
-      count: alertesDuCycle.value.filter((a) => a.severity === 'critical').length,
-    },
-    {
-      value: 'warning',
-      label: 'Avertissements',
-      count: alertesDuCycle.value.filter((a) => a.severity === 'warning').length,
-    },
-    {
-      value: 'info',
-      label: 'Infos',
-      count: alertesDuCycle.value.filter((a) => a.severity === 'info').length,
-    },
-  ]
-
-  return filters.filter((f) => f.value === 'all' || f.count > 0 || f.value === severiteSelectionnee.value)
+const nombreNouvelles = computed(() => alertsStore.alertes.filter((a) => a.resolvedAt === null && !a.isRead).length)
+const nombreSuivies = computed(() => alertsStore.alertes.filter((a) => a.resolvedAt === null && a.isRead).length)
+const nombreResolues = computed(() => alertsStore.alertes.filter((a) => a.resolvedAt !== null).length)
+const nombreHistoriqueEffacable = computed(() => alertsStore.alertes.filter((a) => a.resolvedAt !== null && a.isRead).length)
+const severityRank: Record<AlertSeverity, number> = { critical: 0, warning: 1, info: 2 }
+const alertesFiltrees = computed(() => alertsStore.alertes
+  .filter((alerte) => {
+    if (vueSelectionnee.value === 'new') return alerte.resolvedAt === null && !alerte.isRead
+    if (vueSelectionnee.value === 'followed') return alerte.resolvedAt === null && alerte.isRead
+    return alerte.resolvedAt !== null
+  })
+  .sort((a, b) => severityRank[a.severity] - severityRank[b.severity] || b.createdAt.localeCompare(a.createdAt)))
+const heroTitle = computed(() => nombreNouvelles.value === 0 ? 'Vous êtes à jour' : `${nombreNouvelles.value} nouvelle${nombreNouvelles.value > 1 ? 's' : ''} alerte${nombreNouvelles.value > 1 ? 's' : ''}`)
+const heroSubtitle = computed(() => nombreNouvelles.value === 0
+  ? (nombreSuivies.value > 0 ? `${nombreSuivies.value} alerte${nombreSuivies.value > 1 ? 's' : ''} reste${nombreSuivies.value > 1 ? 'nt' : ''} suivie${nombreSuivies.value > 1 ? 's' : ''}.` : 'Rien de nouveau depuis votre dernière visite.')
+  : 'Les plus importantes apparaissent en premier.')
+const emptyState = computed(() => {
+  if (vueSelectionnee.value === 'new') return { title: 'Vous êtes à jour', subtitle: 'Aucune nouvelle alerte à consulter.' }
+  if (vueSelectionnee.value === 'followed') return { title: 'Aucun suivi en cours', subtitle: 'Les alertes déjà consultées apparaîtront ici.' }
+  return { title: 'Historique vide', subtitle: 'Les alertes terminées apparaîtront ici.' }
 })
 
-const alertesFiltrees = computed(() => {
-  if (severiteSelectionnee.value === 'all') {
-    return alertesDuCycle.value
-  }
-
-  return alertesDuCycle.value.filter((alerte) => alerte.severity === severiteSelectionnee.value)
-})
-
-const getSeverityLabel = (severity: AlertSeverity): string => {
-  if (severity === 'critical') return 'Critique'
-  if (severity === 'warning') return 'Avertissement'
-  return 'Info'
-}
-
-const getSeverityColor = (severity: AlertSeverity): 'danger' | 'warning' | 'medium' => {
-  if (severity === 'critical') return 'danger'
-  if (severity === 'warning') return 'warning'
-  return 'medium'
-}
-
-const getSeverityIcon = (severity: AlertSeverity): string => {
-  if (severity === 'critical') return alertCircleOutline
-  if (severity === 'warning') return warningOutline
-  return informationCircleOutline
-}
-
-const getPlantName = (plantId: string): string => {
-  const plante = plantsStore.getPlanteParId(plantId)
-  return plante?.name ?? 'Plante inconnue'
-}
+const getSeverityLabel = (severity: AlertSeverity): string => severity === 'critical' ? 'Urgent' : severity === 'warning' ? 'Important' : 'Information'
+const getSeverityIcon = (severity: AlertSeverity): string => severity === 'critical' ? alertCircleOutline : severity === 'warning' ? warningOutline : informationCircleOutline
+const getPlantName = (plantId: string): string => plantsStore.getPlanteParId(plantId)?.name ?? 'Plante inconnue'
+const corrigerTypographie = (value: string): string => value
+  .replace(/Humidite/g, 'Humidité')
+  .replace(/Fertilite/g, 'Fertilité')
+  .replace(/Temperature/g, 'Température')
+  .replace(/Luminosite/g, 'Luminosité')
+  .replace(/Lumiere/g, 'Lumière')
+  .replace(/Conductivite/g, 'Conductivité')
+  .replace(/elevee/g, 'élevée')
+  .replace(/Donnees/g, 'Données')
+  .replace(/obsoletes/g, 'obsolètes')
+  .replace(/recente/g, 'récente')
+  .replace(/recue/g, 'reçue')
 
 const marquerToutesLues = async (): Promise<void> => {
-  const success = await alertsStore.marquerToutesLues()
-
-  if (!success) {
-    await showErrorFeedback('Impossible de marquer toutes les alertes comme lues.')
+  if (!(await alertsStore.marquerToutesLues())) {
+    await showErrorFeedback('Impossible de marquer les alertes comme lues.')
     return
   }
-
-  await showInfoFeedback('Toutes les alertes sont marquees comme lues.')
+  await showInfoFeedback('Toutes les alertes ont été vues.')
 }
-
+const marquerLue = async (alerte: Alert): Promise<void> => {
+  if ((await alertsStore.marquerAlerteLue(alerte.id, true)) === null) await showErrorFeedback("Impossible de mettre à jour l'alerte.")
+}
+const supprimerAlerte = async (alerte: Alert): Promise<void> => {
+  if (!(await alertsStore.supprimerAlerte(alerte.id))) await showErrorFeedback("Impossible de supprimer l'alerte.")
+}
 const confirmerSuppressionHistorique = async (): Promise<void> => {
   const confirmation = await alertController.create({
-    header: "Effacer l'historique lu",
-    message: `Supprimer ${nombreHistoriqueEffacable.value} alerte${nombreHistoriqueEffacable.value > 1 ? 's' : ''} resolue${nombreHistoriqueEffacable.value > 1 ? 's' : ''} et lue${nombreHistoriqueEffacable.value > 1 ? 's' : ''} ?`,
-    buttons: [
-      { text: 'Annuler', role: 'cancel' },
-      { text: 'Effacer', role: 'confirm', cssClass: 'alert-confirm-danger' },
-    ],
+    header: 'Effacer les alertes terminées ?',
+    message: `${nombreHistoriqueEffacable.value} alerte${nombreHistoriqueEffacable.value > 1 ? 's' : ''} seront supprimées.`,
+    buttons: [{ text: 'Annuler', role: 'cancel' }, { text: 'Effacer', role: 'confirm', cssClass: 'alert-confirm-danger' }],
   })
-
   await confirmation.present()
-  const { role } = await confirmation.onDidDismiss()
-
-  if (role !== 'confirm') return
-
-  const success = await alertsStore.supprimerHistoriqueLu()
-
-  if (!success) {
-    await showErrorFeedback("Impossible d'effacer l'historique.")
-    return
-  }
-
-  await showInfoFeedback('Historique lu efface.')
+  if ((await confirmation.onDidDismiss()).role !== 'confirm') return
+  if (!(await alertsStore.supprimerHistoriqueLu())) await showErrorFeedback("Impossible d'effacer l'historique.")
 }
-
-const marquerLue = async (alerte: Alert): Promise<void> => {
-  const slider = sliderRefs.get(alerte.id)
-  await slider?.close()
-
-  const updated = await alertsStore.marquerAlerteLue(alerte.id, true)
-
-  if (updated === null) {
-    await showErrorFeedback("Impossible de marquer l'alerte comme lue.")
-  }
-}
-
-const supprimerAlerte = async (alerte: Alert): Promise<void> => {
-  const slider = sliderRefs.get(alerte.id)
-  await slider?.close()
-
-  const success = await alertsStore.supprimerAlerte(alerte.id)
-
-  if (!success) {
-    await showErrorFeedback("Impossible de supprimer l'alerte.")
-  }
-}
-
 const ouvrirAlerte = async (alerte: Alert): Promise<void> => {
-  if (!alerte.isRead) {
-    const updated = await alertsStore.marquerAlerteLue(alerte.id, true)
-
-    if (updated === null) {
-      await showErrorFeedback("Impossible de marquer l'alerte comme lue.")
-      return
-    }
-  }
-
-  await router.push('/plants/' + alerte.plantId)
+  if (!alerte.isRead && (await alertsStore.marquerAlerteLue(alerte.id, true)) === null) return
+  await router.push(`/plants/${alerte.plantId}`)
 }
-
 const chargerAlertes = async (): Promise<void> => {
   await Promise.all([alertsStore.chargerAlertes(), plantsStore.chargerPlantes()])
 }
-
-onIonViewWillEnter(() => {
-  void chargerAlertes()
-})
-
-useGsapReveal({
-  rootSelector: '.alerts-page',
-  itemSelector: '.senvia-reveal',
-})
+onIonViewWillEnter(() => void chargerAlertes())
+useGsapReveal({ rootSelector: '.alerts-page', itemSelector: '.senvia-reveal' })
 </script>
 
 <style scoped>
-.alerts-filters {
-  display: flex;
-  gap: 0.45rem;
-  overflow-x: auto;
-  padding: 0.1rem 0 0.55rem;
-  scrollbar-width: none;
-  margin-bottom: 0.1rem;
-}
-
-.alerts-filters--sub {
-  padding-top: 0;
-  padding-bottom: 0.65rem;
-  margin-bottom: 0.25rem;
-}
-
-.alerts-filters::-webkit-scrollbar {
-  display: none;
-}
-
-.alerts-chip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2.4rem;
-  padding: 0.4rem 1rem;
-  border: 1.5px solid var(--senvia-card-border);
-  border-radius: 999px;
-  background: var(--senvia-surface);
-  color: var(--senvia-text-muted);
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 560;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.alerts-chip--sm {
-  min-height: 2rem;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.78rem;
-}
-
-.alerts-chip__count {
-  min-width: 1.35rem;
-  padding: 0.08rem 0.35rem;
-  border-radius: 999px;
-  background: rgba(var(--ion-color-medium-rgb), 0.13);
-  color: inherit;
-  font-size: 0.72rem;
-  text-align: center;
-}
-
-.alerts-chip__dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.alerts-chip__dot--critical {
-  background: var(--ion-color-danger);
-}
-
-.alerts-chip__dot--warning {
-  background: var(--ion-color-warning);
-}
-
-.alerts-chip__dot--info {
-  background: var(--ion-color-medium);
-}
-
-.alerts-chip--active {
-  border-color: rgba(var(--ion-color-primary-rgb), 0.55);
-  background: rgba(var(--ion-color-primary-rgb), 0.12);
-  color: var(--ion-text-color);
-  font-weight: 650;
-}
-
-.alerts-mark-read-btn {
-  --color: var(--ion-color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.alerts-clear-btn {
-  --color: var(--ion-color-danger);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.alert-title-row {
-  display: flex;
-  gap: 0.65rem;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.alert-title-row__left {
-  display: flex;
-  gap: 0.45rem;
-  align-items: center;
-  min-width: 0;
-  flex: 1;
-}
-
-.alert-title-row h2 {
-  margin: 0;
-  font-size: 1rem;
-  white-space: normal;
-}
-
-.alert-unread-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--ion-color-primary);
-  box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb), 0.12);
-}
-
-.alert-severity-chip {
-  flex: 0 0 auto;
-  height: 1.65rem;
-  margin: 0;
-  font-size: 0.72rem;
-}
-
-.alert-message,
-.alert-meta {
-  color: var(--senvia-text-muted);
-}
-
-.alert-message {
-  margin-top: 0.55rem;
-  white-space: normal;
-}
-
-.alert-meta {
-  font-size: 0.78rem;
-}
-
-.alert-severity-icon {
-  align-self: flex-start;
-  margin-top: 1.15rem;
-  font-size: 1.2rem;
-}
-
-.alert-severity-icon--critical {
-  color: var(--ion-color-danger);
-}
-
-.alert-severity-icon--warning {
-  color: var(--ion-color-warning);
-}
-
-.alert-severity-icon--info {
-  color: var(--ion-color-medium);
-}
-
-.alert-item--unread {
-  --background: rgba(var(--ion-color-primary-rgb), 0.06);
-}
-
-.alert-item--resolved {
-  opacity: 0.88;
-}
-
-.alerts-list {
-  background: transparent;
-  padding: 0;
-}
-
-:deep(.alerts-list ion-item) {
-  --padding-start: 0.95rem;
-  --padding-top: 0.85rem;
-  --padding-bottom: 0.85rem;
-  --inner-padding-end: 0.8rem;
-  --detail-icon-color: var(--senvia-text-muted);
-  --detail-icon-opacity: 0.8;
-  --min-height: 0;
-  border: 1px solid var(--senvia-card-border);
-  border-radius: 16px;
-  margin-bottom: 0.7rem;
-  overflow: hidden;
-}
-
-:deep(.alerts-list ion-item-sliding) {
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 0.7rem;
-}
-
-:deep(.alerts-list ion-item-sliding ion-item) {
-  margin-bottom: 0;
-  border-radius: 0;
-}
-
-:global(.alert-confirm-danger) {
-  color: var(--ion-color-danger) !important;
-}
-
-@media (max-width: 680px) {
-  .alert-title-row h2 {
-    font-size: 0.95rem;
-  }
-
-  :deep(.alerts-list ion-item) {
-    --padding-start: 0.8rem;
-    --padding-top: 0.8rem;
-    --padding-bottom: 0.8rem;
-    --inner-padding-end: 0.55rem;
-  }
+.alerts-page ion-content { --padding-bottom: 2rem; }
+.alerts-heading, .alerts-hero, .alerts-controls, .alerts-list, .alerts-empty, .clear-history { width: 100%; max-width: var(--senvia-focused-content-width); box-sizing: border-box; margin-right: auto; margin-left: 0; }
+.alerts-heading { margin-bottom: 1rem; }
+.alerts-hero { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 1.05rem; border: 1px solid rgba(var(--ion-color-danger-rgb), 0.24); border-radius: 24px; color: #fff; background: radial-gradient(circle at 92% 10%, rgba(255,107,107,0.18), transparent 44%), #17221a; box-shadow: 0 18px 40px rgba(0,0,0,0.28); }
+.alerts-hero--clear { border-color: rgba(var(--ion-color-primary-rgb), 0.22); background: radial-gradient(circle at 92% 10%, rgba(var(--ion-color-primary-rgb), 0.14), transparent 44%), #17221a; }
+.alerts-hero__icon { display: grid; place-items: center; width: 2.9rem; height: 2.9rem; border-radius: 15px; color: #fff; background: rgba(255,255,255,0.16); }
+.alerts-hero__icon ion-icon { font-size: 1.45rem; }
+.alerts-hero__copy span { color: rgba(255,255,255,0.72); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.alerts-hero__copy h1 { margin: 0.15rem 0 0; color: #fff; font-size: 1.25rem; }
+.alerts-hero__copy p { margin: 0.3rem 0 0; color: rgba(255,255,255,0.8); font-size: 0.82rem; }
+.alerts-hero ion-button { grid-column: 1 / -1; justify-self: start; margin: 0; --color: #fff; }
+.alerts-controls { margin-top: 0.9rem; margin-bottom: 0.8rem; }
+.alerts-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.3rem; padding: 0.3rem; border: 1px solid var(--senvia-card-border); border-radius: 18px; background: rgba(255,255,255,0.025); }
+.alert-tab { display: flex; align-items: center; justify-content: center; gap: 0.45rem; min-width: 0; min-height: 3rem; padding: 0.6rem 0.75rem; border: 1px solid transparent; border-radius: 14px; color: var(--senvia-text-muted); background: transparent; font: inherit; font-size: 0.78rem; font-weight: 720; letter-spacing: 0.055em; text-transform: uppercase; transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
+.alert-tab strong { display: grid; place-items: center; min-width: 1.35rem; height: 1.35rem; padding: 0 0.28rem; border-radius: 999px; color: inherit; background: rgba(255,255,255,0.07); font-size: 0.68rem; line-height: 1; }
+.alert-tab:hover { color: var(--ion-text-color); background: rgba(255,255,255,0.04); }
+.alert-tab:active { transform: scale(0.985); }
+.alert-tab--active { border-color: rgba(var(--ion-color-primary-rgb), 0.24); color: var(--ion-color-primary); background: rgba(var(--ion-color-primary-rgb), 0.11); box-shadow: inset 0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.03), 0 6px 18px rgba(0,0,0,0.16); }
+.alert-tab--active strong { color: var(--ion-color-primary-contrast); background: var(--ion-color-primary); }
+.alerts-list { display: grid; gap: 0.65rem; }
+.alerts-empty { margin-top: 0; margin-bottom: 0; }
+.alert-card { overflow: hidden; border: 1px solid var(--senvia-card-border); border-radius: 20px; background: var(--senvia-surface); box-shadow: 0 10px 28px var(--senvia-shadow-color); }
+.alert-card--critical { border-color: rgba(var(--ion-color-danger-rgb), 0.22); }
+.alert-card--warning { border-color: rgba(var(--ion-color-warning-rgb), 0.2); }
+.alert-card--unread { box-shadow: 0 12px 30px rgba(var(--ion-color-primary-rgb), 0.12); }
+.alert-card__main { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.7rem; width: 100%; padding: 0.9rem; border: 0; text-align: left; color: var(--ion-text-color); background: transparent; }
+.alert-card__icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 13px; color: var(--senvia-text-muted); background: var(--senvia-surface-2); }
+.alert-card--critical .alert-card__icon { color: var(--ion-color-danger); background: rgba(var(--ion-color-danger-rgb), 0.1); }
+.alert-card--warning .alert-card__icon { color: var(--ion-color-warning); background: rgba(var(--ion-color-warning-rgb), 0.11); }
+.alert-card__topline { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.alert-card__topline strong { min-width: 0; line-height: 1.25; }
+.alert-card__body > span { display: block; }
+.alert-card__severity { flex: 0 0 auto; margin-left: 0.35rem; padding-left: 0.6rem; border-left: 1px solid var(--senvia-card-border); color: var(--senvia-text-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.045em; text-transform: uppercase; }
+.alert-card__message { margin-top: 0.25rem; color: var(--senvia-text-muted); font-size: 0.84rem; line-height: 1.4; }
+.alert-card__meta { margin-top: 0.38rem; color: var(--senvia-text-muted); font-size: 0.72rem; }
+.alert-card__chevron { color: var(--senvia-text-muted); }
+.alert-card__actions { display: flex; justify-content: flex-end; gap: 0.35rem; padding: 0 0.75rem 0.6rem; }
+.alert-card__actions button { padding: 0.4rem 0.55rem; border: 0; color: var(--ion-color-primary-shade); background: transparent; font: inherit; font-size: 0.75rem; font-weight: 650; }
+.alert-card__actions button.danger { color: var(--ion-color-danger); }
+.clear-history { margin-top: 1rem; }
+@media (max-width: 430px) {
+  .alerts-tabs { gap: 0.2rem; padding: 0.22rem; border-radius: 16px; }
+  .alert-tab { flex-direction: column; gap: 0.2rem; min-height: 3.35rem; padding: 0.42rem 0.2rem; border-radius: 12px; font-size: 0.67rem; letter-spacing: 0.035em; }
+  .alert-tab strong { min-width: 1.2rem; height: 1.2rem; font-size: 0.62rem; }
 }
 </style>

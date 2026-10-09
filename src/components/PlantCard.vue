@@ -38,7 +38,7 @@
         <div class="metric-cell">
           <span class="metric-header">
             <ion-icon :icon="waterOutline" />
-            <span class="metric-label">Humidite</span>
+            <span class="metric-label">Humidité</span>
           </span>
           <strong>{{ moistureLabel }}</strong>
         </div>
@@ -52,14 +52,14 @@
         <div class="metric-cell">
           <span class="metric-header">
             <ion-icon :icon="sunnyOutline" />
-            <span class="metric-label">Lumiere</span>
+            <span class="metric-label">Lumière</span>
           </span>
           <strong>{{ lightLabel }}</strong>
         </div>
         <div class="metric-cell">
           <span class="metric-header">
             <ion-icon :icon="flashOutline" />
-            <span class="metric-label">Fertilite</span>
+            <span class="metric-label">Fertilité</span>
           </span>
           <strong>{{ conductivityLabel }}</strong>
         </div>
@@ -67,7 +67,7 @@
       <p v-else class="measurements-empty">Aucune mesure disponible.</p>
 
       <div class="plant-card__footer">
-        <p class="plant-card__updated">Derniere mise a jour: {{ updatedAtLabel }}</p>
+        <p class="plant-card__updated">Dernière mise à jour : {{ updatedAtLabel }}</p>
       </div>
     </ion-card-content>
   </ion-card>

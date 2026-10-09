@@ -133,7 +133,7 @@
               <ion-select-option value="healthy">En sante</ion-select-option>
               <ion-select-option value="warning">A surveiller</ion-select-option>
               <ion-select-option value="critical">Critique</ion-select-option>
-              <ion-select-option value="stale_data">Donnees anciennes</ion-select-option>
+              <ion-select-option value="stale_data">Données anciennes</ion-select-option>
               <ion-select-option value="unknown">Inconnu</ion-select-option>
             </ion-select>
           </ion-item>

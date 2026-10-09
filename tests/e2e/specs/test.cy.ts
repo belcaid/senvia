@@ -7,7 +7,7 @@ describe('Tabs navigation', () => {
     cy.contains('Mes plantes')
     cy.contains('Favoris')
     cy.contains('Alertes')
-    cy.contains('Reglages')
+    cy.contains('Réglages')
   })
 
   it('opens the favorites and settings tabs', () => {
@@ -15,30 +15,26 @@ describe('Tabs navigation', () => {
     cy.url().should('include', '/tabs/favoris')
     cy.contains(/favori/i)
 
-    cy.contains('Reglages').click()
+    cy.contains('Réglages').click()
     cy.url().should('include', '/tabs/reglages')
-    cy.contains('Synchronisation')
+    cy.contains('Personnalisez seulement ce qui compte au quotidien.')
   })
 
   it('shows the alert inbox and explicit bulk actions', () => {
     cy.contains('Alertes').click()
     cy.url().should('include', '/tabs/alertes')
-    cy.get('.alerts-filters').first().find('.alerts-chip').should('have.length', 2)
-    cy.get('.alerts-filters').first().find('.alerts-chip').first().should('have.class', 'alerts-chip--active')
-    cy.get('.alerts-filters--sub .alerts-chip').should('have.length.at.least', 2)
-    cy.get('ion-select').should('not.exist')
-    cy.get('.alerts-list ion-item').first().within(() => {
-      cy.get('ion-button').should('not.exist')
-    })
-    cy.get('ion-button.alerts-mark-read-btn').click()
-    cy.get('.alert-unread-dot').should('not.exist')
+    cy.get('.alerts-tabs .alert-tab').should('have.length', 3)
+    cy.get('.alerts-controls ion-select').should('not.exist')
+    cy.get('.alerts-list .alert-card').should('have.length.at.least', 1)
+    cy.contains('Tout marquer comme vu').click()
+    cy.contains('Tout marquer comme vu').should('not.exist')
   })
 
   it('opens the plant creation form', () => {
     cy.contains('Nouvelle plante').click()
     cy.url().should('include', '/plants/new')
-    cy.contains('Ajout plante')
-    cy.contains('Ajouter la plante')
+    cy.contains('Ajoutez votre plante')
+    cy.contains('Continuer')
   })
 
   it('opens the dashboard filters with their controls', () => {
@@ -54,18 +50,11 @@ describe('Tabs navigation', () => {
     cy.get('ion-modal.dashboard-filters-modal').should('not.be.visible')
   })
 
-  it('keeps the search icon readable in light and dark themes', () => {
-    cy.get('ion-searchbar').should(($searchbar) => {
-      expect(getComputedStyle($searchbar[0]).getPropertyValue('--icon-color').trim()).to.equal('#254735')
-    })
-
-    cy.document().then((document) => {
-      document.documentElement.setAttribute('data-theme', 'dark')
-    })
-
+  it('uses the dark visual identity consistently', () => {
     cy.get('ion-searchbar').should(($searchbar) => {
       expect(getComputedStyle($searchbar[0]).getPropertyValue('--icon-color').trim()).to.equal('#ffffff')
     })
+    cy.document().its('documentElement.dataset.theme').should('equal', 'dark')
   })
 
   it('keeps the dashboard controls usable on mobile', () => {
