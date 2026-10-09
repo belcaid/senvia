@@ -133,6 +133,7 @@
 
       <section class="settings-footer senvia-reveal">
         <span>{{ appName }} {{ appVersion }} · {{ appPlatform }}</span>
+        <span>Développé par {{ developerName }}</span>
         <ion-button v-if="isDevelopment" fill="clear" color="medium" :disabled="isReloadingDemo" @click="confirmerRechargementDemo">
           {{ isReloadingDemo ? 'Rechargement…' : 'Réinitialiser les données de démonstration' }}
         </ion-button>
@@ -174,6 +175,7 @@ import { showErrorFeedback, showInfoFeedback, showSuccessFeedback } from '@/serv
 import packageMetadata from '../../package.json'
 
 const appName = 'Senvia'
+const developerName = 'Mehdi (belcaid)'
 const appVersion = packageMetadata.version
 const appPlatform = Capacitor.getPlatform()
 const isDevelopment = import.meta.env.DEV
