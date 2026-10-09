@@ -330,10 +330,6 @@ export const useBleStore = defineStore('ble', {
           throw new BleApplicationError('bluetooth_disabled', getBleDefaultErrorMessage('bluetooth_disabled'))
         }
 
-        if (platform === 'android' && this.localisationActive === false) {
-          throw new BleApplicationError('permissions_denied', getBleDefaultErrorMessage('permissions_denied'))
-        }
-
         const scanOptions = {
           ...DEFAULT_SCAN_OPTIONS,
           ...options,
@@ -454,10 +450,6 @@ export const useBleStore = defineStore('ble', {
 
         if (!this.estInitialise || !this.bluetoothActif) {
           return false
-        }
-
-        if (platform === 'android' && this.localisationActive === false) {
-          throw new BleApplicationError('permissions_denied', getBleDefaultErrorMessage('permissions_denied'))
         }
 
         if (platform === 'web' && !isWebRequestLeScanSupported()) {

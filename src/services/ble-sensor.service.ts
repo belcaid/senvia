@@ -471,7 +471,7 @@ export const getBleDefaultErrorMessage = (code: BleErrorCode): string => {
     case 'bluetooth_disabled':
       return 'Bluetooth desactive. Activez le Bluetooth pour continuer.'
     case 'permissions_denied':
-      return 'Permissions BLE refusees ou localisation inactive. Verifiez les reglages Android.'
+      return 'Permissions Bluetooth refusées. Autorisez les appareils à proximité dans les réglages Android.'
     case 'timeout':
       return 'Delai depasse pendant la communication BLE.'
     case 'invalid_read':
