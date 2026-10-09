@@ -1,4 +1,4 @@
-import { onIonViewDidEnter } from '@ionic/vue'
+import { onIonViewWillEnter } from '@ionic/vue'
 import { gsap } from 'gsap'
 import { nextTick } from 'vue'
 
@@ -13,14 +13,19 @@ interface GsapRevealOptions {
 
 export const useGsapReveal = (options: GsapRevealOptions): void => {
   let hasPlayed = false
+  let revealTween: gsap.core.Tween | null = null
 
-  onIonViewDidEnter(() => {
+  onIonViewWillEnter(() => {
     void nextTick(() => {
       if (typeof document === 'undefined') {
         return
       }
 
       if (options.once && hasPlayed) {
+        return
+      }
+
+      if (revealTween?.isActive()) {
         return
       }
 
@@ -40,7 +45,7 @@ export const useGsapReveal = (options: GsapRevealOptions): void => {
       }
 
       gsap.killTweensOf(nodes)
-      gsap.fromTo(
+      revealTween = gsap.fromTo(
         nodes,
         {
           autoAlpha: 0,
@@ -49,8 +54,8 @@ export const useGsapReveal = (options: GsapRevealOptions): void => {
         {
           autoAlpha: 1,
           y: 0,
-          duration: options.duration ?? 0.5,
-          stagger: options.stagger ?? 0.06,
+          duration: options.duration ?? 0.42,
+          stagger: options.stagger ?? 0.045,
           ease: 'power2.out',
           clearProps: 'opacity,transform',
         },

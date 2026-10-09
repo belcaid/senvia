@@ -1,35 +1,28 @@
 <template>
   <ion-page class="plant-detail-page">
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/dashboard" />
-        </ion-buttons>
-        <ion-title>{{ plante?.name ?? 'Detail plante' }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button
-            v-if="plante"
-            fill="clear"
-            class="detail-toolbar-btn"
+    <ion-content class="ion-padding">
+      <nav class="detail-navigation senvia-reveal" aria-label="Navigation de la fiche plante">
+        <page-back-button fallback-href="/tabs/dashboard" />
+        <div v-if="plante" class="detail-navigation__actions">
+          <button
+            type="button"
+            class="detail-navigation__edit"
             aria-label="Modifier la plante"
             @click="isEditModalOpen = true"
           >
-            <ion-icon slot="icon-only" :icon="createOutline" />
-          </ion-button>
-          <ion-button
-            v-if="plante"
-            fill="clear"
-            class="detail-toolbar-btn detail-toolbar-btn--danger"
+            <ion-icon :icon="createOutline" />
+          </button>
+          <button
+            type="button"
+            class="detail-navigation__delete"
             aria-label="Supprimer la plante"
             @click="confirmerSuppression"
           >
-            <ion-icon slot="icon-only" :icon="trashOutline" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+            <ion-icon :icon="trashOutline" />
+          </button>
+        </div>
+      </nav>
 
-    <ion-content>
       <ion-note v-if="plantsStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ plantsStore.erreur }}</ion-note>
       <ion-note v-if="thresholdProfilesStore.erreur" class="senvia-feedback senvia-reveal" color="danger">
         {{ thresholdProfilesStore.erreur }}
@@ -46,36 +39,53 @@
       <ion-note v-if="bleStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ bleStore.erreur }}</ion-note>
 
       <template v-if="plante">
-        <section class="plant-summary ion-padding senvia-reveal">
+        <section class="plant-summary senvia-reveal">
           <ion-icon :icon="iconePlante" class="plant-icon" />
           <div class="plant-summary__content">
-            <h2>{{ plante.name }}</h2>
-            <p>{{ categorieLabel }} - {{ plante.location }}</p>
+            <h1>{{ plante.name }}</h1>
+            <p>{{ categorieLabel }} · {{ plante.location }}</p>
             <div class="plant-summary__chips">
               <plant-status-badge :status="analyseSante.status" />
               <ion-chip v-if="donneesObsoletes && mesureActuelle" color="warning" outline>
-                <ion-label>Donnees obsoletes</ion-label>
+                <ion-label>Données obsolètes</ion-label>
               </ion-chip>
             </div>
           </div>
         </section>
 
-        <ion-card class="detail-card senvia-card senvia-reveal">
+        <ion-card v-if="!capteurAssocie" class="setup-card senvia-reveal">
+          <ion-card-content>
+            <div class="setup-card__icon">
+              <ion-icon :icon="bluetoothOutline" />
+            </div>
+            <div class="setup-card__copy">
+              <span>Étape 2 sur 2</span>
+              <h3>Connectez le capteur</h3>
+              <p>Associez le capteur de {{ plante.name }} pour recevoir ses mesures et ses alertes.</p>
+            </div>
+            <ion-button :router-link="`/plants/${plante.id}/pairing`" expand="block">
+              Connecter un capteur
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card class="detail-card health-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Statut global</ion-card-title>
             <ion-card-subtitle>
-              Derniere analyse: {{ formatDateTime(mesureActuelle?.measuredAt, 'Aucune mesure') }}
+              Dernière analyse : {{ formatDateTime(mesureActuelle?.measuredAt, 'Aucune mesure') }}
             </ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <p class="detail-text">{{ explicationStatut }}</p>
-            <p class="detail-score">Score global: {{ analyseSante.score }}/100</p>
+            <p class="detail-score">Score de santé · {{ analyseSante.score }}/100</p>
             <ion-button
+              v-if="capteurAssocie && !capteurEstDemo"
               expand="block"
-              :disabled="!capteurAssocie || isSyncing"
+              :disabled="isSyncing"
               @click="synchroniserMesures"
             >
-              {{ isSyncing ? 'Synchronisation...' : 'Synchroniser les mesures' }}
+              {{ isSyncing ? 'Synchronisation…' : 'Actualiser les mesures' }}
             </ion-button>
           </ion-card-content>
         </ion-card>
@@ -86,10 +96,10 @@
           </ion-card-header>
           <ion-card-content>
             <div v-if="mesureActuelle" class="metrics-grid">
-              <p><strong>Temperature:</strong> {{ mesureActuelle.temperature.toFixed(1) }} C</p>
-              <p><strong>Humidite:</strong> {{ Math.round(mesureActuelle.moisture) }} %</p>
-              <p><strong>Lumiere:</strong> {{ Math.round(mesureActuelle.light) }} lx</p>
-              <p><strong>Fertilite:</strong> {{ Math.round(mesureActuelle.conductivity) }} uS/cm</p>
+              <p><strong>Température :</strong> {{ mesureActuelle.temperature.toFixed(1) }} °C</p>
+              <p><strong>Humidité :</strong> {{ Math.round(mesureActuelle.moisture) }} %</p>
+              <p><strong>Lumière :</strong> {{ Math.round(mesureActuelle.light) }} lx</p>
+              <p><strong>Fertilité :</strong> {{ Math.round(mesureActuelle.conductivity) }} µS/cm</p>
               <p>
                 <strong>Batterie:</strong>
                 {{ mesureActuelle.batteryLevel === null ? 'Inconnue' : `${Math.round(mesureActuelle.batteryLevel)} %` }}
@@ -100,23 +110,42 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="detail-card senvia-card senvia-reveal">
+        <ion-card v-if="capteurAssocie" class="detail-card sensor-card senvia-card senvia-reveal">
           <ion-card-header>
-            <ion-card-title>Informations capteur</ion-card-title>
+            <ion-card-title>{{ capteurEstDemo ? 'Aperçu de démonstration' : 'Capteur associé' }}</ion-card-title>
+            <ion-card-subtitle>
+              {{ capteurEstDemo ? 'Ces mesures sont fictives et servent à découvrir l’application.' : `Dernier contact ${formatDateTime(capteurAssocie.lastSeenAt, 'jamais')}` }}
+            </ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <div v-if="capteurAssocie" class="sensor-grid">
-              <p><strong>Nom:</strong> {{ capteurAssocie.deviceName }}</p>
-              <p><strong>Identifiant:</strong> {{ capteurAssocie.deviceIdentifier }}</p>
-              <p><strong>Modele:</strong> {{ capteurAssocie.model }}</p>
-              <p>
-                <strong>Batterie connue:</strong>
-                {{ capteurAssocie.batteryLevel === null ? 'Inconnue' : `${Math.round(capteurAssocie.batteryLevel)} %` }}
-              </p>
-              <p><strong>Derniere lecture batterie:</strong> {{ formatDateTime(capteurAssocie.lastBatteryReadAt) }}</p>
-              <p><strong>Dernier contact:</strong> {{ formatDateTime(capteurAssocie.lastSeenAt) }}</p>
+            <div class="sensor-overview">
+              <div class="sensor-overview__status">
+                <span class="sensor-overview__dot"><ion-icon :icon="bluetoothOutline" /></span>
+                <div>
+                  <strong>{{ capteurEstDemo ? 'Capteur de démonstration' : capteurAssocie.deviceName }}</strong>
+                  <p v-if="capteurEstDemo">Connectez votre capteur pour obtenir des mesures réelles.</p>
+                  <p v-else>Batterie {{ capteurAssocie.batteryLevel === null ? 'inconnue' : `${Math.round(capteurAssocie.batteryLevel)} %` }}</p>
+                </div>
+              </div>
+              <ion-button :router-link="`/plants/${plante.id}/pairing`" fill="outline" size="small">
+                {{ capteurEstDemo ? 'Connecter' : 'Gérer' }}
+              </ion-button>
             </div>
-            <p v-else class="detail-empty">Aucun capteur associe a cette plante.</p>
+
+            <ion-accordion-group class="technical-details">
+              <ion-accordion value="technical">
+                <ion-item slot="header" lines="none">
+                  <ion-label>Détails techniques</ion-label>
+                </ion-item>
+                <div slot="content" class="technical-details__content">
+                  <p>Modèle · {{ capteurAssocie.model }}</p>
+                  <p>Identifiant · {{ capteurAssocie.deviceIdentifier }}</p>
+                  <ion-button fill="clear" color="danger" size="small" @click="confirmerDissociation">
+                    Dissocier le capteur
+                  </ion-button>
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
           </ion-card-content>
         </ion-card>
 
@@ -143,7 +172,7 @@
 
             <div class="charts-grid">
               <measurement-line-chart
-                title="Temperature"
+                title="Température"
                 unit="C"
                 metric="temperature"
                 :measurements="historiqueMesures"
@@ -151,7 +180,7 @@
                 :target-max="profilSeuil?.tempMax ?? null"
               />
               <measurement-line-chart
-                title="Humidite du sol"
+                title="Humidité du sol"
                 unit="%"
                 metric="moisture"
                 :measurements="historiqueMesures"
@@ -159,7 +188,7 @@
                 :target-max="profilSeuil?.moistureMax ?? null"
               />
               <measurement-line-chart
-                title="Lumiere"
+                title="Lumière"
                 unit="lx"
                 metric="light"
                 :measurements="historiqueMesures"
@@ -167,7 +196,7 @@
                 :target-max="profilSeuil?.lightMax ?? null"
               />
               <measurement-line-chart
-                title="Fertilite"
+                title="Fertilité"
                 unit="uS/cm"
                 metric="conductivity"
                 :measurements="historiqueMesures"
@@ -178,12 +207,6 @@
           </ion-card-content>
         </ion-card>
 
-        <div class="actions ion-padding-horizontal ion-padding-bottom senvia-reveal">
-          <ion-button :router-link="`/plants/${plante.id}/pairing`" expand="block" fill="outline">
-            <ion-icon slot="start" :icon="bluetoothOutline" />
-            Associer un capteur BLE
-          </ion-button>
-        </div>
       </template>
 
       <screen-placeholder
@@ -232,8 +255,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import {
+  IonAccordion,
+  IonAccordionGroup,
   alertController,
-  IonBackButton,
   IonButton,
   IonButtons,
   IonCard,
@@ -257,6 +281,7 @@ import {
 import { bluetoothOutline, closeOutline, createOutline, trashOutline } from 'ionicons/icons'
 import { useRoute, useRouter } from 'vue-router'
 import MeasurementLineChart from '@/components/MeasurementLineChart.vue'
+import PageBackButton from '@/components/PageBackButton.vue'
 import PlantForm, { type PlantFormValues } from '@/components/PlantForm.vue'
 import PlantStatusBadge from '@/components/PlantStatusBadge.vue'
 import ScreenPlaceholder from '@/components/ScreenPlaceholder.vue'
@@ -295,6 +320,7 @@ const plante = computed(() => plantsStore.getPlanteParId(plantId.value))
 const mesureActuelle = computed(() => measurementsStore.derniereMesureParPlante[plantId.value] ?? null)
 const historiqueMesures = computed(() => measurementsStore.mesuresParPlante[plantId.value] ?? [])
 const capteurAssocie = computed(() => sensorsStore.getCapteurParPlanteId(plantId.value))
+const capteurEstDemo = computed(() => capteurAssocie.value?.id.startsWith('s-demo-') ?? false)
 const profilSeuil = computed(() => thresholdProfilesStore.getProfilParId(plante.value?.thresholdProfileId ?? null) ?? null)
 const staleDataThresholdMinutes = computed(() => settingsStore.parametres.staleDataThresholdMinutes)
 const donneesObsoletes = computed(() =>
@@ -424,6 +450,39 @@ const confirmerSuppression = async (): Promise<void> => {
   await router.replace('/tabs/dashboard')
 }
 
+const confirmerDissociation = async (): Promise<void> => {
+  if (!capteurAssocie.value) {
+    return
+  }
+
+  const sensorId = capteurAssocie.value.id
+  const confirmation = await alertController.create({
+    header: 'Dissocier le capteur',
+    message: `Les mesures déjà enregistrées seront conservées. Vous pourrez connecter un autre capteur ensuite.`,
+    buttons: [
+      { text: 'Annuler', role: 'cancel' },
+      { text: 'Dissocier', role: 'confirm', cssClass: 'alert-confirm-danger' },
+    ],
+  })
+
+  await confirmation.present()
+  const { role } = await confirmation.onDidDismiss()
+
+  if (role !== 'confirm') {
+    return
+  }
+
+  await sensorsStore.supprimerCapteur(sensorId)
+
+  if (sensorsStore.erreur) {
+    await showErrorFeedback('Impossible de dissocier le capteur.')
+    return
+  }
+
+  await plantsStore.chargerPlantes()
+  await showInfoFeedback('Capteur dissocié. Les anciennes mesures sont conservées.')
+}
+
 const isHistoryRange = (value: string): value is HistoryRange =>
   value === '24h' || value === '7d' || value === '30d' || value === 'all'
 
@@ -457,6 +516,10 @@ const synchroniserMesures = async (): Promise<void> => {
     )
 
     if (measurement === null) {
+      if (bleStore.interactionAnnulee) {
+        return
+      }
+
       await showErrorFeedback(bleStore.erreur ?? 'La synchronisation a echoue.')
       return
     }
@@ -487,24 +550,91 @@ watch(plantId, () => {
 </script>
 
 <style scoped>
-.plant-summary {
+.plant-detail-page ion-content {
+  --padding-top: 0.75rem;
+  --padding-bottom: 2rem;
+}
+
+.detail-navigation {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 1100px;
+  margin: 0 auto 0.35rem;
+  padding: 0.25rem 0;
+}
+
+.detail-navigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: 42px;
+  border: 1px solid var(--senvia-card-border);
+  color: var(--ion-text-color);
+  background: var(--senvia-surface);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 680;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.detail-navigation button:active {
+  transform: scale(0.97);
+}
+
+.detail-navigation__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.detail-navigation__edit {
+  width: 44px;
+  padding: 0;
+  border-radius: 14px;
+}
+
+.detail-navigation__delete {
+  width: 44px;
+  padding: 0;
+  border-radius: 14px;
+  border-color: rgba(var(--ion-color-danger-rgb), 0.24) !important;
+  color: var(--ion-color-danger) !important;
+  background: rgba(var(--ion-color-danger-rgb), 0.08) !important;
+}
+
+.detail-navigation ion-icon {
+  font-size: 1.05rem;
+}
+
+.plant-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 720px;
+  margin: 0 auto 1.25rem;
+  padding: 1rem 0 0.35rem;
+  text-align: center;
 }
 
 .plant-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--ion-color-primary);
-  background: rgba(var(--ion-color-primary-rgb), 0.12);
-  border-radius: 999px;
-  padding: 0.5rem;
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.1);
+  border-radius: 24px;
+  padding: 0.9rem;
 }
 
-.plant-summary__content h2 {
+.plant-summary__content h1 {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: clamp(1.65rem, 5vw, 2.2rem);
+  font-weight: 760;
+  letter-spacing: -0.035em;
 }
 
 .plant-summary__content p {
@@ -515,14 +645,79 @@ watch(plantId, () => {
 
 .plant-summary__chips {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-top: 0.55rem;
 }
 
 .detail-card {
-  margin: 0 1rem 0.9rem;
+  margin: 0 0 0.9rem;
   border-radius: 18px;
+}
+
+.setup-card {
+  margin: 0 0 0.9rem;
+  border: 0;
+  border-radius: 24px;
+  --background: linear-gradient(145deg, #173e27, #22653a);
+  color: #f4fff7;
+  box-shadow: 0 18px 40px rgba(14, 60, 31, 0.22);
+}
+
+.setup-card ion-card-content {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.1rem;
+}
+
+.setup-card__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 16px;
+  color: #11351e;
+  background: #6df08c;
+}
+
+.setup-card__icon ion-icon {
+  font-size: 1.45rem;
+}
+
+.setup-card__copy span {
+  color: #9debb0;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.setup-card__copy h3,
+.setup-card__copy p {
+  margin: 0;
+}
+
+.setup-card__copy h3 {
+  margin-top: 0.15rem;
+  color: #fff;
+  font-size: 1.08rem;
+}
+
+.setup-card__copy p {
+  margin-top: 0.3rem;
+  color: rgba(244, 255, 247, 0.78);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.setup-card ion-button {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  --background: #ffffff;
+  --color: #123d21;
 }
 
 .detail-card ion-card-content {
@@ -549,8 +744,7 @@ watch(plantId, () => {
   color: var(--senvia-text-muted);
 }
 
-.metrics-grid,
-.sensor-grid {
+.metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 0.45rem 0.75rem;
@@ -579,20 +773,60 @@ watch(plantId, () => {
   gap: 0.65rem;
 }
 
-.detail-toolbar-btn {
-  --color: var(--ion-text-color);
-  width: 40px;
-  height: 40px;
-}
-
-.detail-toolbar-btn--danger {
-  --color: var(--ion-color-danger);
-}
-
-.actions {
+.sensor-overview {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.sensor-overview__status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sensor-overview__status strong,
+.sensor-overview__status p {
+  display: block;
+  margin: 0;
+}
+
+.sensor-overview__status p {
+  margin-top: 0.15rem;
+  color: var(--senvia-text-muted);
+  font-size: 0.8rem;
+}
+
+.sensor-overview__dot {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  color: var(--ion-color-primary-shade);
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.technical-details {
+  margin-top: 0.45rem;
+}
+
+.technical-details ion-accordion,
+.technical-details ion-item {
+  --background: transparent;
+}
+
+.technical-details__content {
+  padding: 0 0.75rem 0.55rem;
+  color: var(--senvia-text-muted);
+  font-size: 0.78rem;
+}
+
+.technical-details__content p {
+  margin: 0.28rem 0;
 }
 
 :global(:root[data-theme='dark']) .detail-text,

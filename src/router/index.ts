@@ -34,22 +34,22 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Reglages',
         component: () => import('@/views/SettingsView.vue'),
       },
+      {
+        path: '/plants/new',
+        name: 'PlantCreate',
+        component: () => import('@/views/PlantCreateView.vue'),
+      },
+      {
+        path: '/plants/:plantId/pairing',
+        name: 'BlePairing',
+        component: () => import('@/views/BlePairingView.vue'),
+      },
+      {
+        path: '/plants/:plantId',
+        name: 'PlantDetail',
+        component: () => import('@/views/PlantDetailView.vue'),
+      },
     ],
-  },
-  {
-    path: '/plants/new',
-    name: 'PlantCreate',
-    component: () => import('@/views/PlantCreateView.vue'),
-  },
-  {
-    path: '/plants/:plantId/pairing',
-    name: 'BlePairing',
-    component: () => import('@/views/BlePairingView.vue'),
-  },
-  {
-    path: '/plants/:plantId',
-    name: 'PlantDetail',
-    component: () => import('@/views/PlantDetailView.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
