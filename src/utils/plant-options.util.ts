@@ -1,4 +1,4 @@
-import { flaskOutline, flowerOutline, homeOutline, leafOutline, sunnyOutline, waterOutline } from 'ionicons/icons'
+import { earthOutline, flowerOutline, leafOutline, nutritionOutline, roseOutline, sunnyOutline } from 'ionicons/icons'
 import type { PlantCategory } from '@/types/plant.types'
 
 export interface PlantCategoryOption {
@@ -10,11 +10,12 @@ export interface PlantIconOption {
   value: string
   label: string
   icon: string
+  tone: string
 }
 
 export const PLANT_CATEGORY_OPTIONS: PlantCategoryOption[] = [
-  { value: 'indoor', label: 'Interieur' },
-  { value: 'outdoor', label: 'Exterieur' },
+  { value: 'indoor', label: 'Intérieur' },
+  { value: 'outdoor', label: 'Extérieur' },
   { value: 'balcony', label: 'Balcon' },
   { value: 'garden', label: 'Jardin' },
   { value: 'vegetable_garden', label: 'Potager' },
@@ -22,12 +23,12 @@ export const PLANT_CATEGORY_OPTIONS: PlantCategoryOption[] = [
 ]
 
 export const PLANT_ICON_OPTIONS: PlantIconOption[] = [
-  { value: 'leaf', label: 'Feuille', icon: leafOutline },
-  { value: 'flower', label: 'Fleur', icon: flowerOutline },
-  { value: 'sunny', label: 'Soleil', icon: sunnyOutline },
-  { value: 'water', label: 'Goutte', icon: waterOutline },
-  { value: 'home', label: 'Maison', icon: homeOutline },
-  { value: 'flask', label: 'Laboratoire', icon: flaskOutline },
+  { value: 'leaf', label: 'Feuillage', icon: leafOutline, tone: '#52ef78' },
+  { value: 'flower', label: 'Fleur délicate', icon: flowerOutline, tone: '#e491ff' },
+  { value: 'rose', label: 'Plante fleurie', icon: roseOutline, tone: '#ff7597' },
+  { value: 'nutrition', label: 'Plante comestible', icon: nutritionOutline, tone: '#89df58' },
+  { value: 'sunny', label: 'Plante solaire', icon: sunnyOutline, tone: '#ffc857' },
+  { value: 'earth', label: 'Plante de jardin', icon: earthOutline, tone: '#79c9a1' },
 ]
 
 export const DEFAULT_PLANT_CATEGORY: PlantCategory = 'indoor'
