@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import App from './App.vue'
 import router from './router'
 import { initializeDatabase } from '@/database'
@@ -45,8 +46,19 @@ const startupStore = useStartupStore(pinia)
 
 const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
+const applyNativeSystemBars = async (): Promise<void> => {
+  if (!Capacitor.isNativePlatform()) return
+
+  try {
+    await SystemBars.setStyle({ style: SystemBarsStyle.Dark })
+  } catch (error) {
+    console.warn('[system-bars] unable to apply dark style:', error)
+  }
+}
+
 router.isReady().then(async () => {
   await themeStore.init()
+  await applyNativeSystemBars()
   app.mount('#app')
 
   try {
