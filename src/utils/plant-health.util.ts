@@ -201,7 +201,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
       score: 0,
       issues: [],
       dominantIssue: null,
-      explanation: 'Aucune mesure disponible pour evaluer cette plante.',
+      explanation: 'Aucune mesure disponible pour évaluer cette plante.',
     }
   }
 
@@ -221,7 +221,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
       score: 0,
       issues: [],
       dominantIssue: null,
-      explanation: 'Aucun profil de seuils associe. Impossible de calculer un statut fiable.',
+      explanation: 'Aucun profil de seuils associé. Impossible de calculer un statut fiable.',
     }
   }
 
@@ -281,6 +281,6 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
     score: globalScore,
     issues,
     dominantIssue,
-    explanation: `${issues.length} mesures hors seuil (${criticalCount} critique(s), ${warningCount} avertissement(s)). Cause dominante: ${dominantIssue ? buildIssueMessage(dominantIssue) : 'indeterminee'}. Score global ${globalScore}/100.`,
+    explanation: `${issues.length} mesures hors seuil (${criticalCount} critique(s), ${warningCount} avertissement(s)). Cause dominante : ${dominantIssue ? buildIssueMessage(dominantIssue) : 'indéterminée'}. Score global ${globalScore}/100.`,
   }
 }

@@ -2,7 +2,7 @@
   <section class="chart-card">
     <header class="chart-card__header">
       <h4>{{ title }}</h4>
-      <p v-if="latestValue !== null">Actuel: {{ latestValueLabel }}</p>
+      <p v-if="latestValue !== null">Actuel : {{ latestValueLabel }}</p>
       <p v-else>Aucune mesure</p>
     </header>
 
@@ -48,7 +48,7 @@
       </svg>
     </div>
 
-    <p v-else class="empty-state">Pas assez de donnees sur cette periode.</p>
+    <p v-else class="empty-state">Pas assez de données sur cette période.</p>
 
     <footer class="chart-card__footer">
       <span>Min: {{ minLabel }}</span>

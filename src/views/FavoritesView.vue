@@ -122,7 +122,7 @@ const retirerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Pro
     return
   }
 
-  await showInfoFeedback('Retiree des favoris.')
+  await showInfoFeedback('Retirée des favoris.')
 }
 
 const ouvrirPlante = async (plantId: string): Promise<void> => {

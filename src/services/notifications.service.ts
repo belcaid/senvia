@@ -129,7 +129,7 @@ const scheduleSyncReminderNotification = async (preferredReminderTime: string | 
       {
         id: SYNC_REMINDER_NOTIFICATION_ID,
         title: 'Rappel de synchronisation',
-        body: 'Pense a synchroniser tes capteurs Senvia pour mettre les mesures a jour.',
+        body: 'Pensez à synchroniser vos capteurs Senvia pour mettre les mesures à jour.',
         channelId: isAndroid() ? ALERT_CHANNEL_ID : undefined,
         schedule: {
           at: nextReminderAt,

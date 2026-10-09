@@ -152,7 +152,7 @@
         <ion-card class="detail-card senvia-card senvia-reveal">
           <ion-card-header>
             <ion-card-title>Historique des mesures</ion-card-title>
-            <ion-card-subtitle>{{ historiqueMesures.length }} point(s) sur la periode</ion-card-subtitle>
+            <ion-card-subtitle>{{ historiqueMesures.length }} point(s) sur la période</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <div class="history-tabs" role="tablist" aria-label="Période de l’historique">
@@ -213,8 +213,8 @@
         class="senvia-reveal"
         v-else
         title="Plante introuvable"
-        subtitle="Aucune plante correspondant a cet identifiant"
-        description="Retourne au dashboard pour creer une nouvelle plante ou selectionner une plante existante."
+        subtitle="Aucune plante correspondant à cet identifiant"
+        description="Retournez au tableau de bord pour créer une nouvelle plante ou sélectionner une plante existante."
       >
         <template #actions>
           <ion-button router-link="/tabs/dashboard">Retour Dashboard</ion-button>
@@ -405,7 +405,7 @@ const modifierPlante = async (values: PlantFormValues): Promise<void> => {
       return
     }
 
-    await showSuccessFeedback('Plante mise a jour.')
+    await showSuccessFeedback('Plante mise à jour.')
   } finally {
     isSubmitting.value = false
   }
@@ -425,7 +425,7 @@ const confirmerSuppression = async (): Promise<void> => {
 
   const confirmation = await alertController.create({
     header: 'Supprimer la plante',
-    message: `La plante "${plante.value.name}" sera supprimee definitivement.`,
+    message: `La plante "${plante.value.name}" sera supprimée définitivement.`,
     buttons: [
       {
         text: 'Annuler',
@@ -448,11 +448,11 @@ const confirmerSuppression = async (): Promise<void> => {
   const deleted = await plantsStore.supprimerPlante(plante.value.id)
 
   if (!deleted) {
-    await showErrorFeedback('La suppression de la plante a echoue.')
+    await showErrorFeedback('La suppression de la plante a échoué.')
     return
   }
 
-  await showInfoFeedback('Plante supprimee.')
+  await showInfoFeedback('Plante supprimée.')
   await router.replace('/tabs/dashboard')
 }
 
@@ -503,7 +503,7 @@ const selectionnerPeriode = (value: HistoryRange): void => {
 
 const synchroniserMesures = async (): Promise<void> => {
   if (!plante.value || !capteurAssocie.value) {
-    await showWarningFeedback('Associe un capteur avant de synchroniser.')
+    await showWarningFeedback('Associez un capteur avant de synchroniser.')
     return
   }
 
@@ -521,16 +521,16 @@ const synchroniserMesures = async (): Promise<void> => {
         return
       }
 
-      await showErrorFeedback(bleStore.erreur ?? 'La synchronisation a echoue.')
+      await showErrorFeedback(bleStore.erreur ?? 'La synchronisation a échoué.')
       return
     }
 
     await measurementsStore.chargerHistoriqueParPeriode(currentPlant.id, historyRange.value, {
       limit: historyRange.value === 'all' ? 2400 : 800,
     })
-    await showSuccessFeedback('Synchronisation terminee.')
+    await showSuccessFeedback('Synchronisation terminée.')
   } catch {
-    await showErrorFeedback('La synchronisation a echoue.')
+    await showErrorFeedback('La synchronisation a échoué.')
   } finally {
     isSyncing.value = false
   }

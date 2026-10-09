@@ -28,8 +28,8 @@
             v-if="activeFilterCount > 0"
             class="dashboard-icon-action dashboard-icon-action--ghost"
             fill="clear"
-            aria-label="Reinitialiser les filtres"
-            title="Reinitialiser"
+            aria-label="Réinitialiser les filtres"
+            title="Réinitialiser"
             @click="reinitialiserFiltres"
           >
             <ion-icon aria-hidden="true" :icon="closeCircleOutline" />
@@ -140,7 +140,7 @@
         </ion-list>
 
         <div class="filters-modal-actions">
-          <ion-button fill="clear" @click="reinitialiserFiltres">Reinitialiser</ion-button>
+          <ion-button fill="clear" @click="reinitialiserFiltres">Réinitialiser</ion-button>
           <ion-button @click="isFiltersModalOpen = false">Appliquer</ion-button>
         </div>
       </ion-content>
@@ -277,11 +277,11 @@ const basculerFavori = async (plantId: string, isCurrentlyFavorite: boolean): Pr
   const updated = await plantsStore.marquerFavori(plantId, !isCurrentlyFavorite)
 
   if (updated === null) {
-    await showErrorFeedback("Impossible de mettre a jour le favori.")
+    await showErrorFeedback("Impossible de mettre à jour le favori.")
     return
   }
 
-  await showInfoFeedback(updated.isFavorite ? 'Ajoutee aux favoris.' : 'Retiree des favoris.')
+  await showInfoFeedback(updated.isFavorite ? 'Ajoutée aux favoris.' : 'Retirée des favoris.')
 }
 
 const reinitialiserFiltres = (): void => {

@@ -689,7 +689,7 @@ export const useBleStore = defineStore('ble', {
         const capteur = sensorsStore.getCapteurParPlanteId(plantId)
 
         if (!plante || !capteur) {
-          throw new BleApplicationError('sensor_not_found', 'Aucun capteur associe a cette plante.')
+          throw new BleApplicationError('sensor_not_found', 'Aucun capteur associé à cette plante.')
         }
 
         deviceIdentifier = capteur.deviceIdentifier

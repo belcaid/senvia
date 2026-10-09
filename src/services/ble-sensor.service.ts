@@ -56,7 +56,7 @@ export const BLE_OPTIONAL_SERVICE_UUIDS = [
   FLOWER_CARE_SERVICE_UUID,
 ]
 
-const INVALID_READ_MESSAGE = 'Lecture BLE invalide: caracteristiques de mesure introuvables ou donnees invalides.'
+const INVALID_READ_MESSAGE = 'Lecture BLE invalide : caractéristiques de mesure introuvables ou données invalides.'
 
 const normalizeUuid = (value: string): string => value.trim().toLowerCase()
 
@@ -469,15 +469,15 @@ export const getBleDefaultErrorMessage = (code: BleErrorCode): string => {
     case 'connection_failed':
       return 'Impossible de joindre le capteur. Rapprochez le téléphone et vérifiez que le capteur est disponible.'
     case 'bluetooth_disabled':
-      return 'Bluetooth desactive. Activez le Bluetooth pour continuer.'
+      return 'Bluetooth désactivé. Activez le Bluetooth pour continuer.'
     case 'permissions_denied':
       return 'Permissions Bluetooth refusées. Autorisez les appareils à proximité dans les réglages Android.'
     case 'timeout':
-      return 'Delai depasse pendant la communication BLE.'
+      return 'Délai dépassé pendant la communication BLE.'
     case 'invalid_read':
-      return 'Lecture des donnees capteur invalide.'
+      return 'Lecture des données du capteur invalide.'
     case 'sensor_already_paired':
-      return 'Ce capteur est deja associe a une autre plante.'
+      return 'Ce capteur est déjà associé à une autre plante.'
     case 'unavailable':
       return 'Bluetooth indisponible sur cet appareil.'
     case 'unknown':
@@ -517,7 +517,7 @@ export const readBleMeasurementSnapshot = async (
       characteristics.light === null &&
       characteristics.conductivity === null
     ) {
-      throw new BleApplicationError('invalid_read', `Caracteristiques capteur non supportees (${formatServiceSummary(services)}).`)
+      throw new BleApplicationError('invalid_read', `Caractéristiques du capteur non prises en charge (${formatServiceSummary(services)}).`)
     }
 
     if (characteristics.combined !== null) {

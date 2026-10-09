@@ -128,7 +128,7 @@ const buildBatteryAlert = (
     type: 'sensor_battery_low',
     severity,
     title: 'Batterie capteur faible',
-    message: `Batterie du capteur a ${Math.round(batteryLevel)}%. Pense a remplacer la pile.`,
+    message: `Batterie du capteur à ${Math.round(batteryLevel)} %. Pensez à remplacer la pile.`,
     measurementId,
   }
 }

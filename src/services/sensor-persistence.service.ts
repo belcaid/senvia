@@ -89,7 +89,7 @@ export const persistSensorPairing = async (input: PairSensorInput): Promise<Pair
     const previouslyAssociatedSensor = associatedRows[0] ?? null
 
     if (existing?.plant_id && existing.plant_id !== input.plantId) {
-      throw new Error('Ce capteur est deja associe a une autre plante.')
+      throw new Error('Ce capteur est déjà associé à une autre plante.')
     }
 
     const sensorId = existing?.id ?? generateId()
