@@ -74,6 +74,7 @@ npm run test:e2e
 ```
 
 Pour les tests E2E, démarrer le serveur Vite dans un autre terminal avant `npm run test:e2e`.
+Chrome doit être installé sur la machine qui exécute ces tests.
 
 ## Android
 
@@ -102,6 +103,8 @@ cp keystore.properties.example keystore.properties
 ```
 
 Renseignez ensuite les mots de passe dans `keystore.properties`, puis construisez l’APK release depuis Android Studio ou avec `./gradlew assembleRelease`. La clé et le fichier contenant les mots de passe sont exclus de Git. Une clé auto-signée rend les mises à jour cohérentes, mais ne donne pas à l’application la réputation d’une publication Google Play.
+
+Le guide [Préparer une version Android](docs/RELEASE.md) détaille la sauvegarde de la clé, la vérification de la signature, l’installation par USB et les tests à réaliser sur la tablette. L’APK debug produit par GitHub Actions sert uniquement aux essais : il ne peut pas mettre à jour une version release signée avec une autre clé.
 
 ## Stockage et architecture
 
@@ -136,4 +139,4 @@ Le moteur d'alertes s'exécute au démarrage, après une synchronisation et au r
 
 ## Projet
 
-Senvia est développé par Mehdi (`belcaid`) et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation.
+Senvia est développé par Mehdi (`belcaid`) et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation et le [journal des changements](CHANGELOG.md) pour le suivi des versions.
