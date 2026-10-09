@@ -14,6 +14,7 @@ import {
 } from '@/services/notifications.service'
 import { syncAllPlantStatusesAtStartup } from '@/services/plant-status-sync.service'
 import { getAppSettingsPreference } from '@/services/preferences.service'
+import { useStartupStore } from '@/stores/startup.store'
 import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
@@ -40,6 +41,7 @@ import './theme/polish.css'
 
 const pinia = createPinia()
 const themeStore = useThemeStore(pinia)
+const startupStore = useStartupStore(pinia)
 
 const app = createApp(App).use(IonicVue).use(pinia).use(router)
 
@@ -48,9 +50,17 @@ router.isReady().then(async () => {
   app.mount('#app')
 
   try {
-    await registerNotificationDeepLinks(router)
     await initializeDatabase()
     await ensureDemoData()
+    startupStore.markReady()
+  } catch (error) {
+    startupStore.markFailed()
+    console.error('[database] initialization failed:', error)
+    return
+  }
+
+  try {
+    await registerNotificationDeepLinks(router)
     await pruneAlertHistory()
     await registerForegroundSync(pinia)
     await syncAllPlantStatusesAtStartup()
@@ -61,7 +71,6 @@ router.isReady().then(async () => {
     const createdAlerts = await runAlertEngineForAllPlants()
     await notifyForAlerts(createdAlerts)
   } catch (error) {
-    console.warn('[database] initialization failed:', error)
+    console.warn('[startup] optional service initialization failed:', error)
   }
-
 })
