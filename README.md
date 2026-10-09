@@ -4,6 +4,19 @@ Senvia est une application mobile locale de suivi de plantes utilisant des capte
 
 L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, mesures et alertes dans SQLite, et les préférences générales via Capacitor Preferences.
 
+## Aperçu
+
+<table>
+  <tr>
+    <td width="50%"><strong>Tableau de bord</strong><br><img src="docs/screenshots/dashboard.png" alt="Tableau de bord de Senvia avec quatre plantes" /></td>
+    <td width="50%"><strong>Fiche d’une plante</strong><br><img src="docs/screenshots/plant-detail.png" alt="Fiche détaillée d’un basilic dans Senvia" /></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>Alertes</strong><br><img src="docs/screenshots/alerts.png" alt="Alertes de suivi des plantes dans Senvia" /></td>
+    <td width="50%"><strong>Réglages</strong><br><img src="docs/screenshots/settings.png" alt="Réglages de Senvia" /></td>
+  </tr>
+</table>
+
 ## Fonctionnalités V1
 
 - ajout, modification et suppression de plantes ;
