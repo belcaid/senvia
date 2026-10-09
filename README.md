@@ -14,12 +14,11 @@ Le projet propose une alternative simple et locale : l’application communique 
 
 <table>
   <tr>
-    <td width="50%"><strong>Tableau de bord</strong><br><img src="docs/screenshots/dashboard.png" alt="Tableau de bord de Senvia avec quatre plantes" /></td>
-    <td width="50%"><strong>Fiche d’une plante</strong><br><img src="docs/screenshots/plant-detail.png" alt="Fiche détaillée d’un basilic dans Senvia" /></td>
+    <td colspan="2"><strong>Tableau de bord</strong><br><img src="docs/screenshots/dashboard.webp" alt="Tableau de bord de Senvia avec quatre plantes" /></td>
   </tr>
   <tr>
-    <td width="50%"><strong>Alertes</strong><br><img src="docs/screenshots/alerts.png" alt="Alertes de suivi des plantes dans Senvia" /></td>
-    <td width="50%"><strong>Réglages</strong><br><img src="docs/screenshots/settings.png" alt="Réglages de Senvia" /></td>
+    <td width="50%"><strong>Alertes</strong><br><img src="docs/screenshots/alerts.webp" alt="Alertes de suivi des plantes dans Senvia" /></td>
+    <td width="50%"><strong>Réglages</strong><br><img src="docs/screenshots/settings.webp" alt="Réglages de Senvia" /></td>
   </tr>
 </table>
 
@@ -122,7 +121,7 @@ Les données locales ne sont pas incluses dans les sauvegardes Android : la base
 
 Pour une installation personnelle depuis Android Studio, la signature debug générée automatiquement suffit. Une clé release dédiée devient utile pour conserver une identité de signature stable entre plusieurs machines ou distribuer manuellement des APK construits au fil du temps.
 
-Le guide [Compiler et installer Senvia sur Android](docs/RELEASE.md) détaille les deux méthodes, la vérification de la signature, l’installation par USB et la mise à jour sans perte de données. L’APK debug produit par GitHub Actions sert uniquement aux essais : il ne peut pas mettre à jour une version release signée avec une autre clé.
+Le guide [Compiler et installer Senvia sur Android](docs/RELEASE.md) détaille les deux méthodes, la vérification de la signature, l’installation par USB et la mise à jour sans perte de données.
 
 ## Stockage et architecture
 
