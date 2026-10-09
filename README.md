@@ -1,8 +1,14 @@
 # Senvia
 
-Senvia est une application mobile locale de suivi de plantes utilisant des capteurs Bluetooth Low Energy de type Flower Care / HHCC.
+Senvia est une application mobile locale de suivi de plantes conçue pour les capteurs Bluetooth Low Energy HHCC Flower Care.
 
 L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, mesures et alertes dans SQLite, et les préférences générales via Capacitor Preferences.
+
+## Pourquoi Senvia ?
+
+Senvia est né après l’achat de plusieurs capteurs Flower Care. Leur utilisation impliquait de créer un compte supplémentaire et de dépendre d’une application en ligne qui ne correspondait pas au besoin recherché.
+
+Le projet propose une alternative simple et locale : l’application communique directement avec les capteurs en Bluetooth, conserve les données sur l’appareil et reste utilisable hors ligne. Aucun compte ni serveur distant n’est nécessaire.
 
 ## Aperçu
 
@@ -31,6 +37,26 @@ L'application fonctionne sans compte et sans serveur. Elle stocke les plantes, m
 - synchronisation manuelle et au retour de l'application au premier plan ;
 - identité visuelle sombre, optimisée pour téléphone et tablette ;
 - fonctionnement hors ligne et sans compte.
+
+## Capteurs compatibles
+
+La V1 est conçue et testée avec les capteurs de plantes **HHCC Flower Care**. Ils fournissent les données suivantes :
+
+- température ;
+- humidité du sol ;
+- luminosité ;
+- conductivité, utilisée comme indicateur de fertilité ;
+- niveau de batterie.
+
+Senvia prend en charge le protocole BLE utilisé par ce modèle, notamment son service propriétaire Flower Care. Un périphérique visible pendant le scan n’est donc pas nécessairement compatible. Les autres marques et les variantes matérielles ou logicielles utilisant un protocole différent ne sont pas prises en charge à ce jour.
+
+La compatibilité exacte peut varier selon la révision matérielle ou le firmware. Les modèles supplémentaires ne seront annoncés comme compatibles qu’après un test sur appareil réel. Senvia est un projet indépendant, sans affiliation avec HHCC.
+
+## Données et autorisations
+
+Les plantes, mesures, alertes et réglages restent sur l’appareil. Senvia n’impose ni compte utilisateur, ni synchronisation cloud, ni envoi des mesures vers un service distant.
+
+L’accès Bluetooth est nécessaire pour détecter les capteurs, s’y connecter et lire leurs données. Les notifications sont facultatives et servent uniquement aux alertes locales. Sur Android 11 et les versions antérieures, le système peut également demander l’autorisation de localisation pour effectuer un scan BLE ; Senvia ne collecte ni ne stocke la position de l’appareil.
 
 ## Stack
 
@@ -92,19 +118,11 @@ Le dossier `android/` fait partie du projet et doit être versionné. Les permis
 
 Les données locales ne sont pas incluses dans les sauvegardes Android : la base SQLite contient l’historique des plantes et n’est pas chiffrée. Une désinstallation efface donc les plantes, mesures et alertes enregistrées.
 
-### Signer l’APK installé manuellement
+### Installer et mettre à jour l’application
 
-Le nom affiché dans l’application est `Mehdi Belcaid`. L’identité technique d’un APK Android provient toutefois de son certificat de signature. Créez une seule clé release, conservez-la en lieu sûr et réutilisez-la pour toutes les versions :
+Pour une installation personnelle depuis Android Studio, la signature debug générée automatiquement suffit. Une clé release dédiée devient utile pour conserver une identité de signature stable entre plusieurs machines ou distribuer manuellement des APK construits au fil du temps.
 
-```bash
-cd android
-keytool -genkeypair -v -keystore senvia-release.jks -alias senvia -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Mehdi Belcaid, O=Senvia"
-cp keystore.properties.example keystore.properties
-```
-
-Renseignez ensuite les mots de passe dans `keystore.properties`, puis construisez l’APK release depuis Android Studio ou avec `./gradlew assembleRelease`. La clé et le fichier contenant les mots de passe sont exclus de Git. Une clé auto-signée rend les mises à jour cohérentes, mais ne donne pas à l’application la réputation d’une publication Google Play.
-
-Le guide [Préparer une version Android](docs/RELEASE.md) détaille la sauvegarde de la clé, la vérification de la signature, l’installation par USB et les tests à réaliser sur la tablette. L’APK debug produit par GitHub Actions sert uniquement aux essais : il ne peut pas mettre à jour une version release signée avec une autre clé.
+Le guide [Compiler et installer Senvia sur Android](docs/RELEASE.md) détaille les deux méthodes, la vérification de la signature, l’installation par USB et la mise à jour sans perte de données. L’APK debug produit par GitHub Actions sert uniquement aux essais : il ne peut pas mettre à jour une version release signée avec une autre clé.
 
 ## Stockage et architecture
 
@@ -134,9 +152,9 @@ Le moteur d'alertes s'exécute au démarrage, après une synchronisation et au r
 
 - aucune synchronisation cloud ni sauvegarde distante ;
 - aucune prise en charge iOS validée dans le dépôt ;
-- compatibilité à confirmer sur chaque variante matérielle Flower Care / HHCC ;
+- compatibilité limitée aux variantes HHCC Flower Care validées sur appareil réel ;
 - les tests automatisés ne remplacent pas les essais BLE et notifications sur appareil réel.
 
-## Projet
+## Licence
 
-Senvia est développé par Mehdi Belcaid et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation et le [journal des changements](CHANGELOG.md) pour le suivi des versions.
+Senvia est distribué sous licence MIT. Consultez le fichier [`LICENSE`](LICENSE) pour les conditions de réutilisation et le [journal des changements](CHANGELOG.md) pour le suivi des versions.

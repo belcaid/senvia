@@ -18,5 +18,6 @@ Les changements significatifs de Senvia sont consignés dans ce fichier.
 - association atomique des capteurs et migrations SQLite ;
 - reconnexion et annulation des sélecteurs Bluetooth ;
 - comportement BLE sur Android 12 et versions ultérieures ;
+- sens du score de santé, accents et présentation des informations du capteur ;
 - cohérence des barres système et compatibilité Android 7 à 16 ;
 - vulnérabilités des dépendances de production et de développement.
