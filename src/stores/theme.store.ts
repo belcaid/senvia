@@ -9,7 +9,7 @@ interface ThemeState {
 
 export const useThemeStore = defineStore('theme', {
   state: (): ThemeState => ({
-    mode: 'light',
+    mode: 'dark',
     isInitialized: false,
   }),
   actions: {
@@ -21,21 +21,21 @@ export const useThemeStore = defineStore('theme', {
       try {
         this.mode = await initializeTheme()
       } catch (error) {
-        this.mode = 'light'
+        this.mode = 'dark'
 
         if (typeof document !== 'undefined') {
-          document.documentElement.setAttribute('data-theme', 'light')
-          document.documentElement.style.colorScheme = 'light'
+          document.documentElement.setAttribute('data-theme', 'dark')
+          document.documentElement.style.colorScheme = 'dark'
         }
 
-        console.warn('[theme] initialization failed, fallback to light mode:', error)
+        console.warn('[theme] initialization failed, fallback to dark mode:', error)
       } finally {
         this.isInitialized = true
       }
     },
     async setMode(mode: ThemeMode): Promise<void> {
       await setThemeMode(mode)
-      this.mode = mode
+      this.mode = 'dark'
       this.isInitialized = true
     },
   },

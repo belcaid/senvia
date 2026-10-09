@@ -23,8 +23,8 @@ export const DEFAULT_GENERAL_SETTINGS_OPTIONS: GeneralSettingsOptions = {
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  themeMode: 'light',
-  notificationsEnabled: true,
+  themeMode: 'dark',
+  notificationsEnabled: false,
   minimumNotifiedSeverity: 'warning',
   preferredReminderTime: '09:00',
   preferredHistoryRange: DEFAULT_GENERAL_SETTINGS_OPTIONS.preferredHistoryRange,
@@ -199,9 +199,8 @@ export const updateGeneralOptionsPreference = async (
 }
 
 export const getAppSettingsPreference = async (): Promise<AppSettings> => {
-  const [themeMode, notificationsEnabled, preferredReminderTime, minimumNotifiedSeverity, generalOptions] =
+  const [notificationsEnabled, preferredReminderTime, minimumNotifiedSeverity, generalOptions] =
     await Promise.all([
-      getThemeModePreference(),
       getNotificationsEnabledPreference(),
       getReminderTimePreference(),
       getMinimumNotifiedSeverityPreference(),
@@ -209,7 +208,7 @@ export const getAppSettingsPreference = async (): Promise<AppSettings> => {
     ])
 
   return {
-    themeMode: themeMode ?? DEFAULT_APP_SETTINGS.themeMode,
+    themeMode: 'dark',
     notificationsEnabled,
     minimumNotifiedSeverity,
     preferredReminderTime,
@@ -221,9 +220,7 @@ export const getAppSettingsPreference = async (): Promise<AppSettings> => {
 }
 
 export const updateAppSettingsPreference = async (patch: Partial<AppSettings>): Promise<AppSettings> => {
-  if (patch.themeMode !== undefined) {
-    await setThemeModePreference(patch.themeMode)
-  }
+  await setThemeModePreference('dark')
 
   if (patch.notificationsEnabled !== undefined) {
     await setNotificationsEnabledPreference(patch.notificationsEnabled)

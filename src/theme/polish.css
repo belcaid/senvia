@@ -20,6 +20,7 @@
   --senvia-text-muted: #415f4b;
 }
 
+:root,
 :root[data-theme='dark'] {
   --ion-color-medium: #d9ebe1;
   --ion-color-medium-rgb: 217, 235, 225;
@@ -68,6 +69,7 @@ ion-modal ion-content {
   --placeholder-opacity: 0.9;
 }
 
+:root ion-searchbar,
 :root[data-theme='dark'] ion-searchbar {
   --color: var(--ion-text-color);
   --icon-color: var(--senvia-control-icon);
@@ -95,6 +97,27 @@ ion-input {
 ion-select {
   --color: var(--ion-text-color);
   --placeholder-color: var(--senvia-text-muted);
+}
+
+ion-select::part(text),
+ion-select::part(placeholder),
+ion-select::part(icon) {
+  color: var(--ion-text-color);
+  opacity: 1;
+}
+
+ion-popover ion-content,
+ion-popover ion-list,
+ion-popover ion-item,
+ion-popover ion-label {
+  --background: var(--senvia-overlay-background);
+  --color: var(--ion-text-color);
+  color: var(--ion-text-color);
+}
+
+ion-action-sheet {
+  --button-color: var(--ion-text-color);
+  --color: var(--ion-text-color);
 }
 
 ion-segment {
@@ -214,7 +237,24 @@ ion-modal ion-content {
 }
 
 .senvia-card {
-  border-radius: 18px;
+  border-radius: 22px;
+}
+
+.senvia-page-heading {
+  margin: 0.35rem 0 1.1rem;
+}
+
+.senvia-page-heading h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.25rem);
+  font-weight: 740;
+  letter-spacing: -0.04em;
+}
+
+.senvia-page-heading p {
+  margin: 0.3rem 0 0;
+  color: var(--senvia-text-muted);
+  font-size: 0.9rem;
 }
 
 .senvia-form-list {
@@ -224,8 +264,8 @@ ion-modal ion-content {
 .senvia-form-list ion-item {
   --background: var(--senvia-surface-2);
   border: 1px solid var(--senvia-card-border);
-  border-radius: 14px;
-  margin-bottom: 0.2rem;
+  border-radius: 16px;
+  margin-bottom: 0.38rem;
 }
 
 .senvia-muted {

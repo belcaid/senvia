@@ -1,4 +1,7 @@
-:root,
+:root {
+  --senvia-focused-content-width: 1080px;
+}
+
 :root[data-theme='light'] {
   color-scheme: light;
 
@@ -38,25 +41,26 @@
   --senvia-bg-gradient: radial-gradient(circle at 8% 10%, rgba(68, 210, 108, 0.24), transparent 36%),
     radial-gradient(circle at 92% 90%, rgba(29, 140, 70, 0.16), transparent 38%),
     linear-gradient(180deg, #f4faf5 0%, #e8f3ea 100%);
-  --senvia-surface: rgba(255, 255, 255, 0.88);
-  --senvia-surface-2: rgba(245, 251, 246, 0.92);
+  --senvia-surface: rgba(255, 255, 255, 0.94);
+  --senvia-surface-2: rgba(246, 250, 247, 0.96);
   --senvia-text-muted: #3f5d49;
   --senvia-control-icon: #254735;
   --senvia-overlay-background: #f7fbf8;
   --senvia-control-background: rgba(255, 255, 255, 0.92);
-  --senvia-card-border: rgba(23, 58, 38, 0.14);
-  --senvia-shadow-color: rgba(18, 42, 29, 0.08);
+  --senvia-card-border: rgba(23, 58, 38, 0.1);
+  --senvia-shadow-color: rgba(18, 42, 29, 0.07);
 }
 
+:root,
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --ion-color-primary: #4cec71;
-  --ion-color-primary-rgb: 76, 236, 113;
+  --ion-color-primary: #52ef78;
+  --ion-color-primary-rgb: 82, 239, 120;
   --ion-color-primary-contrast: #07190d;
   --ion-color-primary-contrast-rgb: 7, 25, 13;
-  --ion-color-primary-shade: #43d063;
-  --ion-color-primary-tint: #5ef07f;
+  --ion-color-primary-shade: #49d46b;
+  --ion-color-primary-tint: #67f287;
 
   --ion-color-secondary: #28a85a;
   --ion-color-secondary-rgb: 40, 168, 90;
@@ -72,27 +76,31 @@
   --ion-color-tertiary-shade: #66b37d;
   --ion-color-tertiary-tint: #82d198;
 
-  --ion-color-success: #43db75;
+  --ion-color-success: #52df7b;
+  --ion-color-success-rgb: 82, 223, 123;
   --ion-color-warning: #f0bd47;
-  --ion-color-danger: #ff6b6b;
+  --ion-color-warning-rgb: 240, 189, 71;
+  --ion-color-danger: #ff7070;
+  --ion-color-danger-rgb: 255, 112, 112;
 
-  --ion-background-color: #0d1710;
-  --ion-background-color-rgb: 13, 23, 16;
-  --ion-text-color: #e8f6eb;
-  --ion-text-color-rgb: 232, 246, 235;
-  --ion-border-color: rgba(125, 204, 145, 0.18);
+  --ion-background-color: #08110b;
+  --ion-background-color-rgb: 8, 17, 11;
+  --ion-text-color: #f1f8f2;
+  --ion-text-color-rgb: 241, 248, 242;
+  --ion-border-color: rgba(255, 255, 255, 0.08);
 
-  --senvia-bg-gradient: radial-gradient(circle at 8% 14%, rgba(61, 222, 106, 0.26), transparent 38%),
-    radial-gradient(circle at 88% 86%, rgba(10, 70, 35, 0.45), transparent 44%),
-    linear-gradient(180deg, #09120c 0%, #132118 100%);
-  --senvia-surface: rgba(22, 35, 27, 0.82);
-  --senvia-surface-2: rgba(20, 32, 25, 0.9);
-  --senvia-text-muted: #b2d4bd;
+  --senvia-bg-gradient: radial-gradient(circle at 12% 0%, rgba(55, 191, 91, 0.13), transparent 31%),
+    linear-gradient(180deg, #08110b 0%, #0d1710 58%, #09120c 100%);
+  --senvia-surface: rgba(23, 34, 26, 0.94);
+  --senvia-surface-2: rgba(29, 41, 31, 0.92);
+  --senvia-text-muted: #a6b6a9;
   --senvia-control-icon: #ffffff;
-  --senvia-overlay-background: #17231b;
-  --senvia-control-background: rgba(27, 42, 32, 0.96);
-  --senvia-card-border: rgba(114, 205, 142, 0.2);
-  --senvia-shadow-color: rgba(2, 10, 6, 0.45);
+  --senvia-overlay-background: #152018;
+  --senvia-control-background: rgba(27, 40, 30, 0.98);
+  --senvia-sidebar-background: #0c1810;
+  --senvia-sidebar-active: rgba(82, 239, 120, 0.1);
+  --senvia-card-border: rgba(255, 255, 255, 0.085);
+  --senvia-shadow-color: rgba(0, 0, 0, 0.34);
 }
 
 html,
@@ -118,7 +126,7 @@ ion-card {
   --background: var(--senvia-surface);
   --color: var(--ion-text-color);
   border: 1px solid var(--senvia-card-border);
-  box-shadow: 0 14px 35px var(--senvia-shadow-color);
+  box-shadow: 0 12px 32px var(--senvia-shadow-color);
 }
 
 ion-list {
@@ -163,4 +171,25 @@ ion-tab-bar {
 
 ion-button {
   --border-radius: 999px;
+  --border-color: rgba(var(--ion-color-primary-rgb), 0.48);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 650;
+}
+
+ion-button::part(native) {
+  outline: none;
+  box-shadow: none;
+}
+
+button:focus-visible,
+ion-button:focus-visible,
+ion-item[button]:focus-visible {
+  outline: 3px solid rgba(var(--ion-color-primary-rgb), 0.32);
+  outline-offset: 2px;
+}
+
+ion-toggle {
+  --track-background-checked: rgba(var(--ion-color-primary-rgb), 0.42);
+  --handle-background-checked: var(--ion-color-primary);
 }
