@@ -103,7 +103,7 @@ import { gridOutline, heartOutline, leafOutline, notificationsOutline, settingsO
     width: 82px;
     height: 100dvh;
     min-height: 100%;
-    padding: calc(env(safe-area-inset-top, 0px) + 1.8rem) 0.6rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    padding: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 1.8rem) 0.6rem calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 1rem);
     flex-direction: column;
     justify-content: flex-start;
     gap: 0.35rem;
@@ -167,7 +167,7 @@ import { gridOutline, heartOutline, leafOutline, notificationsOutline, settingsO
   }
 
   :deep(.ion-page > ion-content) {
-    --padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem);
+    --padding-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 2rem);
   }
 }
 

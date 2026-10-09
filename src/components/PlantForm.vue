@@ -353,6 +353,25 @@ const showCancel = computed(() => props.showCancel)
 .plant-form__fields {
   margin-top: 0;
   margin-bottom: 0;
+  padding: 0 0.75rem;
+  background: transparent;
+}
+
+.plant-form__fields ion-item {
+  --background: transparent;
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.035);
+  --background-focused: rgba(var(--ion-color-primary-rgb), 0.045);
+  --border-color: transparent;
+  --inner-border-width: 0;
+  --padding-start: 0.8rem;
+  --padding-end: 0.4rem;
+  border-color: rgba(var(--ion-color-primary-rgb), 0.12);
+  background: rgba(var(--ion-color-primary-rgb), 0.025);
+  box-shadow: none;
+}
+
+.plant-form__fields ion-item:last-child {
+  margin-bottom: 0;
 }
 
 .form-actions {

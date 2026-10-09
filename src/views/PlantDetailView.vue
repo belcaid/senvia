@@ -1,6 +1,6 @@
 <template>
   <ion-page class="plant-detail-page">
-    <ion-content class="ion-padding">
+    <ion-content ref="contentRef" class="ion-padding">
       <nav class="detail-navigation senvia-reveal" aria-label="Navigation de la fiche plante">
         <page-back-button fallback-href="/tabs/dashboard" />
         <div v-if="plante" class="detail-navigation__actions">
@@ -38,7 +38,7 @@
       </ion-note>
       <ion-note v-if="bleStore.erreur" class="senvia-feedback senvia-reveal" color="danger">{{ bleStore.erreur }}</ion-note>
 
-      <template v-if="plante">
+      <main v-if="plante" :key="plante.id" class="plant-detail-content">
         <section class="plant-summary senvia-reveal">
           <ion-icon :icon="iconePlante" class="plant-icon" />
           <div class="plant-summary__content">
@@ -155,20 +155,20 @@
             <ion-card-subtitle>{{ historiqueMesures.length }} point(s) sur la periode</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <ion-segment :value="historyRange" @ionChange="onHistoryRangeChange">
-              <ion-segment-button value="24h">
-                <ion-label>24 h</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="7d">
-                <ion-label>7 jours</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="30d">
-                <ion-label>30 jours</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="all">
-                <ion-label>Tout</ion-label>
-              </ion-segment-button>
-            </ion-segment>
+            <div class="history-tabs" role="tablist" aria-label="Période de l’historique">
+              <button
+                v-for="range in historyRanges"
+                :key="range.value"
+                type="button"
+                class="history-tab"
+                :class="{ 'history-tab--active': historyRange === range.value }"
+                role="tab"
+                :aria-selected="historyRange === range.value"
+                @click="selectionnerPeriode(range.value)"
+              >
+                {{ range.label }}
+              </button>
+            </div>
 
             <div class="charts-grid">
               <measurement-line-chart
@@ -207,7 +207,7 @@
           </ion-card-content>
         </ion-card>
 
-      </template>
+      </main>
 
       <screen-placeholder
         class="senvia-reveal"
@@ -253,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import {
   IonAccordion,
   IonAccordionGroup,
@@ -273,10 +273,9 @@ import {
   IonModal,
   IonNote,
   IonPage,
-  IonSegment,
-  IonSegmentButton,
   IonTitle,
   IonToolbar,
+  onIonViewWillEnter,
 } from '@ionic/vue'
 import { bluetoothOutline, closeOutline, createOutline, trashOutline } from 'ionicons/icons'
 import { useRoute, useRouter } from 'vue-router'
@@ -313,6 +312,13 @@ const isSubmitting = ref(false)
 const isSyncing = ref(false)
 const isEditModalOpen = ref(false)
 const historyRange = ref<HistoryRange>('7d')
+const contentRef = ref<{ $el?: HTMLIonContentElement } | null>(null)
+const historyRanges: Array<{ value: HistoryRange; label: string }> = [
+  { value: '24h', label: '24 h' },
+  { value: '7d', label: '7 jours' },
+  { value: '30d', label: '30 jours' },
+  { value: 'all', label: 'Tout' },
+]
 
 const plantId = computed(() => String(route.params.plantId ?? ''))
 
@@ -483,13 +489,8 @@ const confirmerDissociation = async (): Promise<void> => {
   await showInfoFeedback('Capteur dissocié. Les anciennes mesures sont conservées.')
 }
 
-const isHistoryRange = (value: string): value is HistoryRange =>
-  value === '24h' || value === '7d' || value === '30d' || value === 'all'
-
-const onHistoryRangeChange = (event: CustomEvent): void => {
-  const value = String((event as CustomEvent<{ value?: string | null }>).detail?.value ?? '')
-
-  if (!isHistoryRange(value) || !plante.value) {
+const selectionnerPeriode = (value: HistoryRange): void => {
+  if (!plante.value || value === historyRange.value) {
     return
   }
 
@@ -540,6 +541,10 @@ useGsapReveal({
   itemSelector: '.senvia-reveal',
 })
 
+onIonViewWillEnter(() => {
+  void nextTick(() => contentRef.value?.$el?.scrollToTop(0))
+})
+
 onMounted(() => {
   void chargerContexte()
 })
@@ -551,8 +556,15 @@ watch(plantId, () => {
 
 <style scoped>
 .plant-detail-page ion-content {
-  --padding-top: 0.75rem;
   --padding-bottom: 2rem;
+}
+
+.plant-detail-content {
+  display: flex;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  flex-direction: column;
 }
 
 .detail-navigation {
@@ -726,6 +738,48 @@ watch(plantId, () => {
   gap: 0.6rem;
 }
 
+.history-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid var(--senvia-card-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.history-tab {
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--senvia-text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 720;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.history-tab:hover {
+  color: var(--ion-text-color);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.history-tab:active {
+  transform: scale(0.985);
+}
+
+.history-tab--active {
+  border-color: rgba(var(--ion-color-primary-rgb), 0.24);
+  color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.11);
+  box-shadow: inset 0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.03), 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
 .detail-card :deep(ion-card-title),
 .detail-card :deep(ion-card-subtitle) {
   color: var(--ion-text-color);
@@ -833,5 +887,20 @@ watch(plantId, () => {
 :global(:root[data-theme='dark']) .detail-score,
 :global(:root[data-theme='dark']) .plant-summary__content p {
   color: #e1f3e7;
+}
+
+@media (max-width: 430px) {
+  .history-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.22rem;
+    padding: 0.22rem;
+    border-radius: 16px;
+  }
+
+  .history-tab {
+    min-height: 2.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+  }
 }
 </style>
