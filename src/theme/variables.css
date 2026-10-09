@@ -2,55 +2,6 @@
   --senvia-focused-content-width: 1080px;
 }
 
-:root[data-theme='light'] {
-  color-scheme: light;
-
-  /* Core palette - inspired by maquette4.webp */
-  --ion-color-primary: #2db84e;
-  --ion-color-primary-rgb: 45, 184, 78;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #27a245;
-  --ion-color-primary-tint: #3ec660;
-
-  --ion-color-secondary: #1a8c46;
-  --ion-color-secondary-rgb: 26, 140, 70;
-  --ion-color-secondary-contrast: #f4fff7;
-  --ion-color-secondary-contrast-rgb: 244, 255, 247;
-  --ion-color-secondary-shade: #177b3e;
-  --ion-color-secondary-tint: #319858;
-
-  --ion-color-tertiary: #6ebd83;
-  --ion-color-tertiary-rgb: 110, 189, 131;
-  --ion-color-tertiary-contrast: #102215;
-  --ion-color-tertiary-contrast-rgb: 16, 34, 21;
-  --ion-color-tertiary-shade: #61a673;
-  --ion-color-tertiary-tint: #7dc495;
-
-  --ion-color-success: #2fb35b;
-  --ion-color-warning: #d9a729;
-  --ion-color-danger: #d24a4a;
-
-  --ion-background-color: #eef6ef;
-  --ion-background-color-rgb: 238, 246, 239;
-  --ion-text-color: #122218;
-  --ion-text-color-rgb: 18, 34, 24;
-  --ion-border-color: rgba(29, 54, 38, 0.12);
-
-  /* App tokens */
-  --senvia-bg-gradient: radial-gradient(circle at 8% 10%, rgba(68, 210, 108, 0.24), transparent 36%),
-    radial-gradient(circle at 92% 90%, rgba(29, 140, 70, 0.16), transparent 38%),
-    linear-gradient(180deg, #f4faf5 0%, #e8f3ea 100%);
-  --senvia-surface: rgba(255, 255, 255, 0.94);
-  --senvia-surface-2: rgba(246, 250, 247, 0.96);
-  --senvia-text-muted: #3f5d49;
-  --senvia-control-icon: #254735;
-  --senvia-overlay-background: #f7fbf8;
-  --senvia-control-background: rgba(255, 255, 255, 0.92);
-  --senvia-card-border: rgba(23, 58, 38, 0.1);
-  --senvia-shadow-color: rgba(18, 42, 29, 0.07);
-}
-
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;

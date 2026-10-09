@@ -16,7 +16,6 @@ import {
 import { syncAllPlantStatusesAtStartup } from '@/services/plant-status-sync.service'
 import { getAppSettingsPreference } from '@/services/preferences.service'
 import { useStartupStore } from '@/stores/startup.store'
-import { useThemeStore } from '@/stores/theme.store'
 
 import { IonicVue } from '@ionic/vue'
 
@@ -41,7 +40,6 @@ import './theme/variables.css'
 import './theme/polish.css'
 
 const pinia = createPinia()
-const themeStore = useThemeStore(pinia)
 const startupStore = useStartupStore(pinia)
 
 const app = createApp(App).use(IonicVue).use(pinia).use(router)
@@ -57,7 +55,6 @@ const applyNativeSystemBars = async (): Promise<void> => {
 }
 
 router.isReady().then(async () => {
-  await themeStore.init()
   await applyNativeSystemBars()
   app.mount('#app')
 

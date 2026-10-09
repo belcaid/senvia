@@ -315,26 +315,4 @@ const updatedAtLabel = computed(() => {
   }
 }
 
-:root[data-theme='light'] .plant-card {
-  --background: linear-gradient(145deg, rgba(245, 251, 247, 0.96), rgba(229, 243, 233, 0.95));
-}
-
-:root[data-theme='light'] .metric-cell {
-  background: rgba(17, 54, 33, 0.05);
-  border-color: rgba(17, 54, 33, 0.12);
-}
-
-:root[data-theme='light'] .metric-label,
-:root[data-theme='light'] .measurements-empty,
-:root[data-theme='light'] .plant-card__updated {
-  color: #355542;
-}
-
-:root[data-theme='light'] .metric-cell strong {
-  color: #13281d;
-}
-
-:root[data-theme='light'] .plant-card :deep(ion-card-title) {
-  color: #10291b;
-}
 </style>

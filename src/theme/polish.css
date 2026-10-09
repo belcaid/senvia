@@ -5,21 +5,6 @@
   --senvia-space-lg: 1.2rem;
 }
 
-:root[data-theme='light'] {
-  --ion-color-medium: #5d7567;
-  --ion-color-medium-rgb: 93, 117, 103;
-  --ion-color-medium-contrast: #f4f8f5;
-  --ion-color-medium-contrast-rgb: 244, 248, 245;
-  --ion-color-medium-shade: #516658;
-  --ion-color-medium-tint: #6e8477;
-
-  --ion-color-success-rgb: 47, 179, 91;
-  --ion-color-warning-rgb: 217, 167, 41;
-  --ion-color-danger-rgb: 210, 74, 74;
-
-  --senvia-text-muted: #415f4b;
-}
-
 :root,
 :root[data-theme='dark'] {
   --ion-color-medium: #d9ebe1;
@@ -59,14 +44,6 @@ ion-modal ion-content {
   --padding-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.95rem);
   --padding-start: calc(var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) + 0.95rem);
   --padding-end: calc(var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) + 0.95rem);
-}
-
-:root[data-theme='light'] ion-searchbar {
-  --color: var(--ion-text-color);
-  --icon-color: var(--senvia-control-icon);
-  --clear-button-color: var(--senvia-control-icon);
-  --placeholder-color: #4b6654;
-  --placeholder-opacity: 0.9;
 }
 
 :root ion-searchbar,

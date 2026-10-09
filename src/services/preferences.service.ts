@@ -1,7 +1,6 @@
 import { Preferences } from '@capacitor/preferences'
 import type { AlertSeverity } from '@/types/alert.types'
 import type { AppSettings, HistoryRange } from '@/types/app-settings.types'
-import { THEME_PREFERENCE_KEY, type ThemeMode } from '@/types/theme.types'
 
 const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled'
 const MINIMUM_NOTIFIED_SEVERITY_KEY = 'minimum_notified_severity'
@@ -23,7 +22,6 @@ export const DEFAULT_GENERAL_SETTINGS_OPTIONS: GeneralSettingsOptions = {
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  themeMode: 'dark',
   notificationsEnabled: false,
   minimumNotifiedSeverity: 'warning',
   preferredReminderTime: '09:00',
@@ -32,8 +30,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   batteryReadIntervalHours: DEFAULT_GENERAL_SETTINGS_OPTIONS.batteryReadIntervalHours,
   autoSyncOnForeground: DEFAULT_GENERAL_SETTINGS_OPTIONS.autoSyncOnForeground,
 }
-
-const isThemeMode = (value: string | null): value is ThemeMode => value === 'light' || value === 'dark'
 
 const isAlertSeverity = (value: string | null): value is AlertSeverity =>
   value === 'info' || value === 'warning' || value === 'critical'
@@ -103,16 +99,6 @@ const parseGeneralSettingsOptions = (value: string | null): GeneralSettingsOptio
   } catch {
     return DEFAULT_GENERAL_SETTINGS_OPTIONS
   }
-}
-
-export const getThemeModePreference = async (): Promise<ThemeMode | null> => {
-  const { value } = await Preferences.get({ key: THEME_PREFERENCE_KEY })
-
-  return isThemeMode(value) ? value : null
-}
-
-export const setThemeModePreference = async (mode: ThemeMode): Promise<void> => {
-  await Preferences.set({ key: THEME_PREFERENCE_KEY, value: mode })
 }
 
 export const getNotificationsEnabledPreference = async (): Promise<boolean> => {
@@ -208,7 +194,6 @@ export const getAppSettingsPreference = async (): Promise<AppSettings> => {
     ])
 
   return {
-    themeMode: 'dark',
     notificationsEnabled,
     minimumNotifiedSeverity,
     preferredReminderTime,
@@ -220,8 +205,6 @@ export const getAppSettingsPreference = async (): Promise<AppSettings> => {
 }
 
 export const updateAppSettingsPreference = async (patch: Partial<AppSettings>): Promise<AppSettings> => {
-  await setThemeModePreference('dark')
-
   if (patch.notificationsEnabled !== undefined) {
     await setNotificationsEnabledPreference(patch.notificationsEnabled)
   }

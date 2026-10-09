@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { updateAppSettingsPreference, DEFAULT_APP_SETTINGS, getAppSettingsPreference } from '@/services/preferences.service'
 import { syncNotificationPreferences } from '@/services/notifications.service'
 import { toErrorMessage } from '@/stores/store.utils'
-import { useThemeStore } from '@/stores/theme.store'
 import type { AppSettings } from '@/types/app-settings.types'
 
 interface SettingsState {
@@ -10,16 +9,6 @@ interface SettingsState {
   estChargement: boolean
   estSauvegarde: boolean
   erreur: string | null
-}
-
-const applyThemeToDom = (mode: AppSettings['themeMode']): void => {
-  if (typeof document === 'undefined') {
-    return
-  }
-
-  const root = document.documentElement
-  root.setAttribute('data-theme', mode)
-  root.style.colorScheme = mode
 }
 
 export const useSettingsStore = defineStore('settings', {
@@ -37,14 +26,7 @@ export const useSettingsStore = defineStore('settings', {
       try {
         const parametres = await getAppSettingsPreference()
         this.parametres = parametres
-        applyThemeToDom(parametres.themeMode)
         await syncNotificationPreferences(parametres, { requestPermission: false })
-
-        const themeStore = useThemeStore()
-        themeStore.$patch({
-          mode: parametres.themeMode,
-          isInitialized: true,
-        })
       } catch (error) {
         this.erreur = toErrorMessage(error, 'Impossible de charger les parametres')
       } finally {
@@ -68,13 +50,6 @@ export const useSettingsStore = defineStore('settings', {
         }
 
         this.parametres = parametres
-        applyThemeToDom(parametres.themeMode)
-
-        const themeStore = useThemeStore()
-        themeStore.$patch({
-          mode: parametres.themeMode,
-          isInitialized: true,
-        })
 
         return parametres
       } catch (error) {
