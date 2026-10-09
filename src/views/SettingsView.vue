@@ -175,7 +175,7 @@ import { showErrorFeedback, showInfoFeedback, showSuccessFeedback } from '@/serv
 import packageMetadata from '../../package.json'
 
 const appName = 'Senvia'
-const developerName = 'Mehdi (belcaid)'
+const developerName = 'Mehdi Belcaid'
 const appVersion = packageMetadata.version
 const appPlatform = Capacitor.getPlatform()
 const isDevelopment = import.meta.env.DEV

@@ -94,11 +94,11 @@ Les données locales ne sont pas incluses dans les sauvegardes Android : la base
 
 ### Signer l’APK installé manuellement
 
-Le nom affiché dans l’application est `Mehdi (belcaid)`. L’identité technique d’un APK Android provient toutefois de son certificat de signature. Créez une seule clé release, conservez-la en lieu sûr et réutilisez-la pour toutes les versions :
+Le nom affiché dans l’application est `Mehdi Belcaid`. L’identité technique d’un APK Android provient toutefois de son certificat de signature. Créez une seule clé release, conservez-la en lieu sûr et réutilisez-la pour toutes les versions :
 
 ```bash
 cd android
-keytool -genkeypair -v -keystore senvia-release.jks -alias senvia -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Mehdi (belcaid), O=Senvia"
+keytool -genkeypair -v -keystore senvia-release.jks -alias senvia -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Mehdi Belcaid, O=Senvia"
 cp keystore.properties.example keystore.properties
 ```
 
@@ -139,4 +139,4 @@ Le moteur d'alertes s'exécute au démarrage, après une synchronisation et au r
 
 ## Projet
 
-Senvia est développé par Mehdi (`belcaid`) et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation et le [journal des changements](CHANGELOG.md) pour le suivi des versions.
+Senvia est développé par Mehdi Belcaid et distribué sous licence MIT. Consultez le fichier `LICENSE` pour les conditions de réutilisation et le [journal des changements](CHANGELOG.md) pour le suivi des versions.

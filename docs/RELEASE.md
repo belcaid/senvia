@@ -49,7 +49,7 @@ keytool -genkeypair -v \
   -keyalg RSA \
   -keysize 2048 \
   -validity 10000 \
-  -dname "CN=Mehdi (belcaid), O=Senvia"
+  -dname "CN=Mehdi Belcaid, O=Senvia"
 cp android/keystore.properties.example android/keystore.properties
 ```
 
