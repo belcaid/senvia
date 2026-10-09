@@ -36,7 +36,7 @@ export interface PlantHealthIssue {
 
 export interface PlantHealthAssessment {
   status: PlantStatus
-  score: number
+  score: number | null
   issues: PlantHealthIssue[]
   dominantIssue: PlantHealthIssue | null
   explanation: string
@@ -187,7 +187,7 @@ const evaluateMetric = (
 }
 
 const buildIssueMessage = (issue: PlantHealthIssue): string => {
-  const qualifier = issue.direction === 'low' ? 'trop basse' : 'trop elevee'
+  const qualifier = issue.direction === 'low' ? 'trop basse' : 'trop élevée'
   return `${issue.label} ${qualifier} (${formatValue(issue.value)} ${issue.unit}, cible ${formatValue(issue.min)}-${formatValue(issue.max)} ${issue.unit})`
 }
 
@@ -198,7 +198,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
   if (measurement === null) {
     return {
       status: 'unknown',
-      score: 0,
+      score: null,
       issues: [],
       dominantIssue: null,
       explanation: 'Aucune mesure disponible pour évaluer cette plante.',
@@ -208,7 +208,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
   if (options.isStale) {
     return {
       status: 'stale_data',
-      score: 100,
+      score: null,
       issues: [],
       dominantIssue: null,
       explanation: `Données obsolètes : la dernière mesure dépasse le seuil de fraîcheur (${staleThreshold} min).`,
@@ -218,7 +218,7 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
   if (!options.thresholdProfile) {
     return {
       status: 'unknown',
-      score: 0,
+      score: null,
       issues: [],
       dominantIssue: null,
       explanation: 'Aucun profil de seuils associé. Impossible de calculer un statut fiable.',
@@ -237,8 +237,9 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
   }
 
   const issues = allEvaluations.filter((item) => item.status !== 'ok')
-  const weightedScore = allEvaluations.reduce((acc, item) => acc + item.score * item.weight, 0)
-  const globalScore = Math.round(clamp(weightedScore, 0, 100))
+  const weightedRiskScore = allEvaluations.reduce((acc, item) => acc + item.score * item.weight, 0)
+  const riskScore = Math.round(clamp(weightedRiskScore, 0, 100))
+  const healthScore = 100 - riskScore
   const dominantIssue =
     issues.length > 0
       ? [...issues].sort((a, b) => b.score * b.weight - (a.score * a.weight))[0]
@@ -250,37 +251,37 @@ export const evaluatePlantHealth = (options: EvaluatePlantHealthOptions): PlantH
   const status: PlantStatus =
     issues.length === 0
       ? 'healthy'
-      : criticalCount >= 1 || globalScore >= 65
+      : criticalCount >= 1 || riskScore >= 65
         ? 'critical'
-        : globalScore >= 30 || warningCount >= 1
+        : riskScore >= 30 || warningCount >= 1
           ? 'warning'
           : 'healthy'
 
   if (issues.length === 0) {
     return {
       status,
-      score: globalScore,
+      score: healthScore,
       issues,
       dominantIssue,
-      explanation: `En sante: toutes les mesures sont dans les plages du profil "${options.thresholdProfile.name}" (score ${globalScore}/100).`,
+      explanation: `En santé : toutes les mesures sont dans les plages du profil "${options.thresholdProfile.name}" (score de santé ${healthScore}/100).`,
     }
   }
 
   if (issues.length === 1 && dominantIssue !== null) {
     return {
       status,
-      score: globalScore,
+      score: healthScore,
       issues,
       dominantIssue,
-      explanation: `${buildIssueMessage(dominantIssue)}. Statut ${status === 'critical' ? 'critique' : 'a surveiller'} (score ${globalScore}/100).`,
+      explanation: `${buildIssueMessage(dominantIssue)}. Statut ${status === 'critical' ? 'critique' : 'à surveiller'} (score de santé ${healthScore}/100).`,
     }
   }
 
   return {
     status,
-    score: globalScore,
+    score: healthScore,
     issues,
     dominantIssue,
-    explanation: `${issues.length} mesures hors seuil (${criticalCount} critique(s), ${warningCount} avertissement(s)). Cause dominante : ${dominantIssue ? buildIssueMessage(dominantIssue) : 'indéterminée'}. Score global ${globalScore}/100.`,
+    explanation: `${issues.length} mesures hors seuil (${criticalCount} critique(s), ${warningCount} avertissement(s)). Cause dominante : ${dominantIssue ? buildIssueMessage(dominantIssue) : 'indéterminée'}. Score de santé ${healthScore}/100.`,
   }
 }

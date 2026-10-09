@@ -34,6 +34,7 @@ describe('evaluatePlantHealth', () => {
     })
 
     expect(result.status).toBe('healthy')
+    expect(result.score).toBe(100)
     expect(result.issues).toHaveLength(0)
   })
 
@@ -46,6 +47,7 @@ describe('evaluatePlantHealth', () => {
     })
 
     expect(result.status).toBe('stale_data')
+    expect(result.score).toBeNull()
   })
 
   test('returns critical for a strongly out-of-range measurement', () => {
@@ -60,6 +62,7 @@ describe('evaluatePlantHealth', () => {
     })
 
     expect(result.status).toBe('critical')
+    expect(result.score).toBeLessThan(100)
     expect(result.dominantIssue?.key).toBe('moisture')
   })
 })

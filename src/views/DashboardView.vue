@@ -130,8 +130,8 @@
               label-placement="stacked"
             >
               <ion-select-option value="all">Tous</ion-select-option>
-              <ion-select-option value="healthy">En sante</ion-select-option>
-              <ion-select-option value="warning">A surveiller</ion-select-option>
+              <ion-select-option value="healthy">En santé</ion-select-option>
+              <ion-select-option value="warning">À surveiller</ion-select-option>
               <ion-select-option value="critical">Critique</ion-select-option>
               <ion-select-option value="stale_data">Données anciennes</ion-select-option>
               <ion-select-option value="unknown">Inconnu</ion-select-option>

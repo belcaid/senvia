@@ -78,7 +78,9 @@
           </ion-card-header>
           <ion-card-content>
             <p class="detail-text">{{ explicationStatut }}</p>
-            <p class="detail-score">Score de santé · {{ analyseSante.score }}/100</p>
+            <p class="detail-score">
+              Score de santé · {{ analyseSante.score === null ? 'Indisponible' : `${analyseSante.score}/100` }}
+            </p>
             <ion-button
               v-if="capteurAssocie && !capteurEstDemo"
               expand="block"
@@ -100,13 +102,8 @@
               <p><strong>Humidité :</strong> {{ Math.round(mesureActuelle.moisture) }} %</p>
               <p><strong>Lumière :</strong> {{ Math.round(mesureActuelle.light) }} lx</p>
               <p><strong>Fertilité :</strong> {{ Math.round(mesureActuelle.conductivity) }} µS/cm</p>
-              <p>
-                <strong>Batterie:</strong>
-                {{ mesureActuelle.batteryLevel === null ? 'Inconnue' : `${Math.round(mesureActuelle.batteryLevel)} %` }}
-              </p>
-              <p><strong>Source:</strong> {{ mesureActuelle.source }}</p>
             </div>
-            <p v-else class="detail-empty">Aucune mesure enregistree.</p>
+            <p v-else class="detail-empty">Aucune mesure enregistrée.</p>
           </ion-card-content>
         </ion-card>
 
@@ -124,7 +121,7 @@
                 <div>
                   <strong>{{ capteurEstDemo ? 'Capteur de démonstration' : capteurAssocie.deviceName }}</strong>
                   <p v-if="capteurEstDemo">Connectez votre capteur pour obtenir des mesures réelles.</p>
-                  <p v-else>Batterie {{ capteurAssocie.batteryLevel === null ? 'inconnue' : `${Math.round(capteurAssocie.batteryLevel)} %` }}</p>
+                  <p v-else>Batterie du capteur · {{ capteurAssocie.batteryLevel === null ? 'inconnue' : `${Math.round(capteurAssocie.batteryLevel)} %` }}</p>
                 </div>
               </div>
               <ion-button :router-link="`/plants/${plante.id}/pairing`" fill="outline" size="small">
